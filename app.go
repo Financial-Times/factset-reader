@@ -5,10 +5,16 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/jawher/mow.cli"
+	"github.com/gorilla/mux"
+	"strconv"
+	"net/http"
 )
 
 //const bbgIDs = "edm_bbg_ids.txt"
 const securityEntityMap = "edm_security_entity_map.txt"
+
+type httpHandler struct {
+}
 
 func main() {
 
@@ -54,6 +60,13 @@ func main() {
 		EnvVar: "FACTSET_FTP",
 	})
 
+	port := app.Int(cli.IntOpt{
+		Name:   "port",
+		Value:  8080,
+		Desc:   "application port",
+		EnvVar: "PORT",
+	})
+
 	app.Action = func() {
 		s3 := s3Config{
 			accKey:    *awsAccessKey,
@@ -89,6 +102,8 @@ func main() {
 		if err != nil {
 			log.Error(err)
 		}
+		httpHandler := &httpHandler{}
+		listen(httpHandler, *port)
 	}
 
 	err := app.Run(os.Args)
@@ -96,3 +111,15 @@ func main() {
 		log.Errorf("[%v]", err)
 	}
 }
+
+func listen(h *httpHandler, port int) {
+	log.Infof("Listening on port:", port)
+	r := mux.NewRouter()
+	r.HandleFunc("/__health", h.health()).Methods("GET")
+	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
+	err := http.ListenAndServe(":" + strconv.Itoa(port), r)
+	if err != nil {
+		log.Error(err)
+	}
+}
+
