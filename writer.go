@@ -2,12 +2,9 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"github.com/minio/minio-go"
 	"strings"
 	"time"
-	"os"
-	"io"
-	"fmt"
-	"github.com/rlmcpherson/s3gof3r"
 )
 
 type writer interface {
@@ -18,54 +15,19 @@ type s3Writer struct {
 	config s3Config
 }
 
-//func (s3w s3Writer) Write(resName string) error {
-//	s3Client, err := minio.New(s3w.config.domain, s3w.config.accKey, s3w.config.secretKey, true)
-//	if err != nil {
-//		return err
-//	}
-//
-//	name := gets3ResName(resName)
-//	//n, err := s3Client.FPutObject(s3w.config.bucket, name, dataFolder + "/" + resName, "")
-//	n, err := s3Client.GetBucketLocation(s3w.config.bucket)
-//	if err != nil {
-//		log.Error(err)
-//		return err
-//	}
-//	log.Infof("Uploaded file [%s] of size [%s] successfully", name, n)
-//	return nil
-//}
-
 func (s3w s3Writer) Write(resName string) error {
-	k, err := s3gof3r.EnvKeys() // get S3 keys from environment
-	if err != nil {
-		return err
-	}
-	// Open bucket to put file into
-	s3 := s3gof3r.New(s3w.config.domain, k)
-	b := s3.Bucket(s3w.config.bucket)
-
-	// open file to upload
-	file, err := os.Open(dataFolder + "/" + resName)
+	s3Client, err := minio.New(s3w.config.domain, s3w.config.accKey, s3w.config.secretKey, true)
 	if err != nil {
 		return err
 	}
 
-	// Open a PutWriter for upload
-	n := gets3ResName(resName)
-	w, err := b.PutWriter(n, nil, nil)
+	name := gets3ResName(resName)
+	n, err := s3Client.FPutObject(s3w.config.bucket, name, dataFolder+"/"+resName, "")
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	if _, err = io.Copy(w, file); err != nil {
-		// Copy into S3
-		log.Error(err)
-		return err
-	}
-	if err = w.Close(); err != nil {
-		return err
-	}
-	fmt.Println(n)
+	log.Infof("Uploaded file [%s] of size [%d] successfully", name, n)
 	return nil
 }
 

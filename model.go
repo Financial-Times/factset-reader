@@ -1,6 +1,6 @@
 package main
 
-const dataFolder = "data1"
+const dataFolder = "data"
 
 type factsetResource struct {
 	archive  string

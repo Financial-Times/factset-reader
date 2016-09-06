@@ -2,6 +2,7 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"os"
 	"time"
 )
 
@@ -11,7 +12,7 @@ type service struct {
 }
 
 func (s service) UploadFromFactset(res []factsetResource) error {
-	//defer os.RemoveAll(dataFolder)
+	defer os.RemoveAll(dataFolder)
 
 	for _, r := range res {
 		start := time.Now()

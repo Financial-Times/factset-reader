@@ -4,14 +4,15 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/jawher/mow.cli"
 	"github.com/gorilla/mux"
-	"strconv"
+	"github.com/jawher/mow.cli"
+	"github.com/robfig/cron"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
-//const bbgIDs = "edm_bbg_ids.txt"
-const securityEntityMap = "edm_security_entity_map.txt"
+const serSeparator = ","
 
 type httpHandler struct {
 }
@@ -55,7 +56,7 @@ func main() {
 
 	factsetFTP := app.String(cli.StringOpt{
 		Name:   "factsetFTP",
-		Value:  "fts.factset.com",
+		Value:  "fts-sftp.factset.com",
 		Desc:   "factset ftp server address",
 		EnvVar: "FACTSET_FTP",
 	})
@@ -65,6 +66,12 @@ func main() {
 		Value:  8080,
 		Desc:   "application port",
 		EnvVar: "PORT",
+	})
+
+	resources := app.String(cli.StringOpt{
+		Name:   "factsetResources",
+		Desc:   "factset resources to be loaded",
+		EnvVar: "FACTSET_RESOURCES",
 	})
 
 	app.Action = func() {
@@ -88,20 +95,18 @@ func main() {
 			reader: reader,
 			writer: writer,
 		}
-		err := s.UploadFromFactset([]factsetResource{
-			{
-				archive:  "/datafeeds/edm/edm_premium/edm_premium_full",
-				fileName: securityEntityMap,
-			},
-			//{
-			//	archive:  "/datafeeds/edm/edm_bbg_ids",
-			//	fileName: bbgIDs,
-			//},
-		})
+		factsetRes := getResourceList(*resources)
 
-		if err != nil {
-			log.Error(err)
-		}
+		c := cron.New()
+		//run the upload every monday at 1:00 PM
+		c.AddFunc("0 0 13 * * 1", func() {
+			err := s.UploadFromFactset(factsetRes)
+			if err != nil {
+				log.Error(err)
+			}
+		})
+		c.Start()
+
 		httpHandler := &httpHandler{}
 		listen(httpHandler, *port)
 	}
@@ -112,14 +117,29 @@ func main() {
 	}
 }
 
+func getResourceList(resources string) []factsetResource {
+	factsetRes := []factsetResource{}
+	resList := strings.Split(resources, serSeparator)
+	for _, fulRes := range resList {
+		resPath := strings.Split(fulRes, ":")
+		if len(resPath) == 2 {
+			fr := factsetResource{
+				archive:  resPath[0],
+				fileName: resPath[1],
+			}
+			factsetRes = append(factsetRes, fr)
+		}
+	}
+	return factsetRes
+}
+
 func listen(h *httpHandler, port int) {
-	log.Infof("Listening on port:", port)
+	log.Infof("Listening on port: %d", port)
 	r := mux.NewRouter()
 	r.HandleFunc("/__health", h.health()).Methods("GET")
 	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
-	err := http.ListenAndServe(":" + strconv.Itoa(port), r)
+	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
 	if err != nil {
 		log.Error(err)
 	}
 }
-

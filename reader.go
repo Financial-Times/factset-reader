@@ -2,12 +2,11 @@ package main
 
 import (
 	"archive/zip"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 	"io"
-	"net"
 	"os"
 	"strings"
 	"time"
@@ -24,24 +23,23 @@ type factsetReader struct {
 const pathSeparator = "/"
 
 func (sfr factsetReader) ReadRes(fRes factsetResource) error {
-	var auths []ssh.AuthMethod
+	key := os.Getenv("FACTSET_PRIVATE_KEY")
 
-	conn, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK"))
-
+	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		return err
 	}
 
-	auths = append(auths, ssh.PublicKeysCallback(agent.NewClient(conn).Signers))
-	//auths = append(auths, ssh.Password(sfr.config.password))
-
-	c := ssh.ClientConfig{
+	c := &ssh.ClientConfig{
 		User: sfr.config.username,
-		Auth: auths,
+		Auth: []ssh.AuthMethod{
+			ssh.PublicKeys(signer),
+		},
 	}
 
-	tcpConn, err := ssh.Dial("tcp", sfr.config.address+":22", &c)
+	tcpConn, err := ssh.Dial("tcp", sfr.config.address+":6671", c)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	defer tcpConn.Close()
