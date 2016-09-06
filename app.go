@@ -6,7 +6,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
-	"github.com/robfig/cron"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,6 +14,7 @@ import (
 const serSeparator = ","
 
 type httpHandler struct {
+	s service
 }
 
 func main() {
@@ -68,11 +68,11 @@ func main() {
 		EnvVar: "PORT",
 	})
 
-	resources := app.String(cli.StringOpt{
-		Name:   "factsetResources",
-		Desc:   "factset resources to be loaded",
-		EnvVar: "FACTSET_RESOURCES",
-	})
+	//resources := app.String(cli.StringOpt{
+	//	Name:   "factsetResources",
+	//	Desc:   "factset resources to be loaded",
+	//	EnvVar: "FACTSET_RESOURCES",
+	//})
 
 	app.Action = func() {
 		s3 := s3Config{
@@ -95,19 +95,24 @@ func main() {
 			reader: reader,
 			writer: writer,
 		}
-		factsetRes := getResourceList(*resources)
 
-		c := cron.New()
-		//run the upload every monday at 1:00 PM
-		c.AddFunc("0 0 13 * * 1", func() {
-			err := s.UploadFromFactset(factsetRes)
-			if err != nil {
-				log.Error(err)
-			}
-		})
-		c.Start()
+		//c := cron.New()
+		////run the upload every monday at 1:00 PM
+		//c.AddFunc("0 0 13 * * 1", func() {
+		//	err := s.UploadFromFactset(factsetRes)
+		//	if err != nil {
+		//		log.Error(err)
+		//	}
+		//})
+		//c.Start()
+		//go func(s service) {
+		//	err := s.UploadFromFactset(factsetRes)
+		//	if err != nil {
+		//		log.Error(err)
+		//	}
+		//}(s)
 
-		httpHandler := &httpHandler{}
+		httpHandler := &httpHandler{s:s}
 		listen(httpHandler, *port)
 	}
 
@@ -138,8 +143,20 @@ func listen(h *httpHandler, port int) {
 	r := mux.NewRouter()
 	r.HandleFunc("/__health", h.health()).Methods("GET")
 	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
-	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
+	r.HandleFunc("/jobs", h.createJob).Methods("POST")
+	err := http.ListenAndServe(":" + strconv.Itoa(port), r)
 	if err != nil {
 		log.Error(err)
+	}
+}
+
+func (h httpHandler) createJob(w http.ResponseWriter, r *http.Request) {
+	factsetRes := factsetResource{
+		archive: "/datafeeds/edm/edm_premium/edm_premium_full",
+		fileName: "securityEntityMap",
+	}
+	err := h.s.UploadFromFactset([]factsetResource{factsetRes})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
