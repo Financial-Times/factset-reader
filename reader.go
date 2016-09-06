@@ -25,7 +25,7 @@ const pathSeparator = "/"
 func (sfr factsetReader) ReadRes(fRes factsetResource) error {
 	key := os.Getenv("FACTSET_PRIVATE_KEY")
 
-	signer, err := ssh.ParsePrivateKey(key)
+	signer, err := ssh.ParsePrivateKey([]byte(key))
 	if err != nil {
 		return err
 	}
