@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"os/exec"
 )
 
 type reader interface {
@@ -23,9 +24,11 @@ type factsetReader struct {
 const pathSeparator = "/"
 
 func (sfr factsetReader) ReadRes(fRes factsetResource) error {
-	key := os.Getenv("FACTSET_PRIVATE_KEY")
-
-	signer, err := ssh.ParsePrivateKey([]byte(key))
+	key, err := exec.Command("/bin/bash", "-c", "/usr/bin/etcdctl get /ft/_credentials/factset/factset_private_key").Output()
+	if err != nil {
+		return err
+	}
+	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		return err
 	}
