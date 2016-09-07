@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 	"time"
-	"os/exec"
+	"io/ioutil"
 )
 
 type reader interface {
@@ -24,10 +24,11 @@ type factsetReader struct {
 const pathSeparator = "/"
 
 func (sfr factsetReader) ReadRes(fRes factsetResource) error {
-	key, err := exec.Command("/bin/bash", "-c", "/usr/bin/etcdctl get /ft/_credentials/factset/factset_private_key").Output()
+	key, err := ioutil.ReadFile("/.ssh/id_rs_coco")
 	if err != nil {
 		return err
 	}
+
 	signer, err := ssh.ParsePrivateKey(key)
 	if err != nil {
 		return err
@@ -40,7 +41,7 @@ func (sfr factsetReader) ReadRes(fRes factsetResource) error {
 		},
 	}
 
-	tcpConn, err := ssh.Dial("tcp", sfr.config.address+":6671", c)
+	tcpConn, err := ssh.Dial("tcp", sfr.config.address + ":6671", c)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -68,7 +69,7 @@ func getLastVersionOfArch(client *sftp.Client, path string) (string, string, err
 	pathVars := strings.Split(path, pathSeparator)
 
 	dir := ""
-	for i := 0; i < len(pathVars)-1; i++ {
+	for i := 0; i < len(pathVars) - 1; i++ {
 		dir += pathVars[i] + pathSeparator
 	}
 	files, err := client.ReadDir(dir)
@@ -83,7 +84,7 @@ func getLastVersionOfArch(client *sftp.Client, path string) (string, string, err
 
 	for _, file := range files {
 		name := file.Name()
-		if strings.Contains(name, pathVars[len(pathVars)-1]) {
+		if strings.Contains(name, pathVars[len(pathVars) - 1]) {
 			if lastFile == nil {
 				lastFile.name = name
 				lastFile.lastModified = file.ModTime()
