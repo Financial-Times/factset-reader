@@ -24,7 +24,7 @@ type factsetReader struct {
 const pathSeparator = "/"
 
 func (sfr factsetReader) ReadRes(fRes factsetResource) error {
-	key, err := ioutil.ReadFile("/.ssh/id_rs_coco")
+	key, err := ioutil.ReadFile(".ssh/id_rs_coco")
 	if err != nil {
 		return err
 	}
