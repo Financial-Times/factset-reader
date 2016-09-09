@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"io"
@@ -93,12 +92,9 @@ func (s *sftpClient) save(file *sftp.File, dest string) error {
 	}
 	defer downFile.Close()
 
-	n, err := io.Copy(downFile, io.LimitReader(file, size))
+	_, err = io.Copy(downFile, io.LimitReader(file, size))
 	if err != nil {
 		return err
-	}
-	if n != size {
-		return errors.New("Error downloading file " + file.Name())
 	}
 
 	return nil
