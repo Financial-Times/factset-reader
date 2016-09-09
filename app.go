@@ -5,11 +5,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/jasonlvhit/gocron"
 	"github.com/jawher/mow.cli"
 	"net/http"
 	"strconv"
 	"strings"
-	"github.com/jasonlvhit/gocron"
 )
 
 const resSeparator = ","
@@ -74,7 +74,7 @@ func main() {
 
 	resources := app.String(cli.StringOpt{
 		Name:   "factsetResources",
-		Value: "/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt",
+		Value:  "/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt",
 		Desc:   "factset resources to be loaded",
 		EnvVar: "FACTSET_RESOURCES",
 	})
@@ -96,7 +96,7 @@ func main() {
 
 		fsClient := sftpClient{config: fc}
 		reader := factsetReader{client: &fsClient}
-		s3Client := httpS3Client{config:s3}
+		s3Client := httpS3Client{config: s3}
 		writer := s3Writer{s3Client: &s3Client}
 
 		s := service{
@@ -108,7 +108,7 @@ func main() {
 
 		go func() {
 			sch := gocron.NewScheduler()
-			sch.Every(1).Friday().At("13:45").Do(func() {
+			sch.Every(1).Friday().At("15:25").Do(func() {
 				err := s.UploadFromFactset(factsetRes)
 				if err != nil {
 					log.Error(err)
@@ -148,7 +148,7 @@ func listen(h *httpHandler, port int) {
 	r := mux.NewRouter()
 	r.HandleFunc("/__health", h.health()).Methods("GET")
 	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
-	err := http.ListenAndServe(":" + strconv.Itoa(port), r)
+	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
 	if err != nil {
 		log.Error(err)
 	}

@@ -2,13 +2,14 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"io"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"path"
+	"strconv"
 )
 
 type factsetClient interface {
@@ -86,7 +87,7 @@ func (s sftpClient) Download(path string, dest string) error {
 
 func (s *sftpClient) save(file *sftp.File, dest string) error {
 	os.Mkdir(dest, 0755)
-	_ , fileName := path.Split(file.Name())
+	_, fileName := path.Split(file.Name())
 	downFile, err := os.Create(path.Join(dest, fileName))
 	if err != nil {
 		return err
@@ -98,8 +99,7 @@ func (s *sftpClient) save(file *sftp.File, dest string) error {
 		return err
 	}
 	if n != size {
-		log.Errorf("Writting file failed. Amount written: [%d]", n)
-		return nil
+		return errors.New("Error downloading file " + file.Name())
 	}
 
 	return nil

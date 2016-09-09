@@ -1,12 +1,12 @@
 package main
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"time"
 	"io/ioutil"
+	"os"
 	"path"
+	"testing"
+	"time"
 )
 
 const testFolder = "test"
@@ -18,11 +18,11 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 
 	fim := []fileInfoMock{
 		{
-			name: "edm_premium_full_1532",
+			name:  "edm_premium_full_1532",
 			mtime: time.Date(2016, time.September, 6, 23, 0, 0, 0, time.UTC),
 		},
 		{
-			name: "edm_premium_full_1547",
+			name:  "edm_premium_full_1547",
 			mtime: time.Date(2016, time.September, 7, 23, 0, 0, 0, time.UTC),
 		},
 	}
@@ -32,14 +32,14 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 		fis = append(fis, os.FileInfo(fi))
 	}
 
-	tcs := [] struct {
+	tcs := []struct {
 		res      string
 		files    []os.FileInfo
 		expected string
 	}{
 		{
-			res: "edm_premium_full",
-			files: fis,
+			res:      "edm_premium_full",
+			files:    fis,
 			expected: "edm_premium_full_1547",
 		},
 	}
@@ -62,8 +62,8 @@ func TestFactsetReader_Unzip(t *testing.T) {
 		dest    string
 	}{
 		archive: "edm_premium_full_1532.zip",
-		name: "edm_security_entity_map.txt",
-		dest: testFolder,
+		name:    "edm_security_entity_map.txt",
+		dest:    testFolder,
 	}
 
 	err := fsReader.unzip(tc.archive, tc.name, tc.dest)
@@ -102,7 +102,7 @@ func TestFactsetReader_Download(t *testing.T) {
 		path     string
 		fileName string
 	}{
-		path: testFolder,
+		path:     testFolder,
 		fileName: "edm_premium_full_1532.zip",
 	}
 
@@ -122,11 +122,11 @@ func TestFactsetReader_ReadRes(t *testing.T) {
 		readDirMock: func(dir string) ([]os.FileInfo, error) {
 			fim := []fileInfoMock{
 				{
-					name: "edm_premium_full_1532.zip",
+					name:  "edm_premium_full_1532.zip",
 					mtime: time.Date(2016, time.September, 6, 23, 0, 0, 0, time.UTC),
 				},
 				{
-					name: "edm_premium_full_1522.zip",
+					name:  "edm_premium_full_1522.zip",
 					mtime: time.Date(2016, time.September, 1, 23, 0, 0, 0, time.UTC),
 				},
 			}
@@ -168,5 +168,3 @@ func TestFactsetReader_ReadRes(t *testing.T) {
 
 	defer as.NoError(os.RemoveAll(dest))
 }
-
-

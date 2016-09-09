@@ -2,9 +2,9 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"path"
 	"strings"
 	"time"
-	"path"
 )
 
 type writer interface {

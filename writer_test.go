@@ -1,11 +1,11 @@
 package main
 
 import (
-	"testing"
-	"time"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
+	"testing"
+	"time"
 )
 
 const dbFolder = testFolder + "/db"
@@ -17,11 +17,11 @@ func TestS3Writer_Gets3ResName(t *testing.T) {
 		expected string
 	}{
 		{
-			resName: "edm_premium_full_1532.zip",
+			resName:  "edm_premium_full_1532.zip",
 			expected: "edm_premium_full_1532" + "_" + time.Now().Format("2006-01-02") + ".zip",
 		},
 		{
-			resName: "edm_premium_full_1532",
+			resName:  "edm_premium_full_1532",
 			expected: "edm_premium_full_1532" + "_" + time.Now().Format("2006-01-02"),
 		},
 	}
@@ -44,7 +44,7 @@ func TestS3Writer_Write(t *testing.T) {
 				return 0, err
 			}
 			os.Mkdir(dbFolder, 0766)
-			err = ioutil.WriteFile(dbFolder + "/" + objectName, file, 0766)
+			err = ioutil.WriteFile(dbFolder+"/"+objectName, file, 0766)
 			if err != nil {
 				return 0, err
 			}

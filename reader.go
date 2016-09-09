@@ -5,9 +5,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"io"
 	"os"
+	"path"
 	"strings"
 	"time"
-	"path"
 )
 
 type reader interface {

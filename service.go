@@ -2,8 +2,8 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"time"
 	"os"
+	"time"
 )
 
 type service struct {
@@ -12,7 +12,12 @@ type service struct {
 }
 
 func (s service) UploadFromFactset(res []factsetResource) error {
-	defer os.RemoveAll(dataFolder)
+	defer func() {
+		err := os.RemoveAll(dataFolder)
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 
 	err := s.reader.Init()
 	if err != nil {
@@ -25,13 +30,11 @@ func (s service) UploadFromFactset(res []factsetResource) error {
 		log.Infof("Loading resource [%s]", r)
 		err := s.reader.ReadRes(r, dataFolder)
 		if err != nil {
-			log.Errorf("Error while reading resource [%s]", r)
 			return err
 		}
 		log.Infof("Resource [%s] was succesfully read from Factset in %d", r.fileName, time.Since(start))
-		err = s.writer.Write(r.fileName, dataFolder)
+		err = s.writer.Write(dataFolder, r.fileName)
 		if err != nil {
-			log.Errorf("Error while writing resource [%s]", r)
 			return err
 		}
 		log.Infof("Finished writting resource [%s] to s3 in %d", r, time.Since(start))
