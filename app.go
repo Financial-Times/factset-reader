@@ -106,8 +106,8 @@ func main() {
 
 		factsetRes := getResourceList(*resources)
 		c := cron.New()
-		//run the upload every monday at 10:00 AM
-		c.AddFunc("0 0 10 30 * 5", func() {
+		//run the upload every monday at 8:20 AM
+		c.AddFunc("0 0 8 20 * 5", func() {
 			err := s.UploadFromFactset(factsetRes)
 			if err != nil {
 				log.Error(err)
@@ -146,22 +146,8 @@ func listen(h *httpHandler, port int) {
 	r := mux.NewRouter()
 	r.HandleFunc("/__health", h.health()).Methods("GET")
 	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
-	r.HandleFunc("/jobs", h.createJob).Methods("POST")
 	err := http.ListenAndServe(":" + strconv.Itoa(port), r)
 	if err != nil {
 		log.Error(err)
 	}
-}
-
-func (h httpHandler) createJob(w http.ResponseWriter, r *http.Request) {
-	factsetRes := factsetResource{
-		archive:  "/datafeeds/edm/edm_premium/edm_premium_full",
-		fileName: "edm_security_entity_map.txt",
-	}
-	go func() {
-		err := h.s.UploadFromFactset([]factsetResource{factsetRes})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}()
 }
