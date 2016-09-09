@@ -1,7 +1,6 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
@@ -50,7 +49,7 @@ func (s *sftpClient) initSSHClient(config sftpConfig) error {
 		return err
 	}
 
-	tcpConn, err := ssh.Dial("tcp", config.address+":"+strconv.Itoa(config.port), c)
+	tcpConn, err := ssh.Dial("tcp", config.address + ":" + strconv.Itoa(config.port), c)
 	if err != nil {
 		return err
 	}
