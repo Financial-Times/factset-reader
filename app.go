@@ -107,7 +107,7 @@ func main() {
 		factsetRes := getResourceList(*resources)
 		c := cron.New()
 		//run the upload every monday at 8:20 AM
-		c.AddFunc("0 0 8 20 * 5", func() {
+		c.AddFunc("0 33 8 * * 5", func() {
 			err := s.UploadFromFactset(factsetRes)
 			if err != nil {
 				log.Error(err)
