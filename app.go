@@ -104,7 +104,7 @@ func main() {
 			writer: &writer,
 		}
 
-		factsetRes := getResourceList(resources)
+		factsetRes := getResourceList(*resources)
 		c := cron.New()
 		//run the upload every monday at 10:00 AM
 		c.AddFunc("0 0 10 30 * 5", func() {
