@@ -7,7 +7,8 @@ import (
 	"os"
 	"path"
 	"strings"
-	"time"
+	"regexp"
+	"strconv"
 )
 
 type reader interface {
@@ -63,26 +64,32 @@ func (sfr *factsetReader) download(filePath string, fileName string, dest string
 }
 
 func (sfr *factsetReader) getLastVersion(files []os.FileInfo, searchedRes string) (string, error) {
-	lastFile := &struct {
-		name         string
-		lastModified time.Time
+	recFile := &struct {
+		name string
+		vers int
 	}{}
 
+	r := regexp.MustCompile("[0-9]+")
 	for _, file := range files {
 		name := file.Name()
 		if strings.Contains(name, searchedRes) {
-			if lastFile == nil {
-				lastFile.name = name
-				lastFile.lastModified = file.ModTime()
+			v, err := strconv.Atoi(r.FindStringSubmatch(name)[0])
+			if err != nil {
+				return "", err
+			}
+			if recFile == nil {
+				recFile.name = name
+				recFile.vers = v
 			} else {
-				if file.ModTime().After(lastFile.lastModified) {
-					lastFile.name = name
-					lastFile.lastModified = file.ModTime()
+				if v > recFile.vers {
+					recFile.name = name
+					recFile.vers = v
 				}
+
 			}
 		}
 	}
-	return lastFile.name, nil
+	return recFile.name, nil
 }
 
 func (sfr *factsetReader) unzip(archive string, name string, dest string) error {
