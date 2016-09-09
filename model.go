@@ -1,6 +1,7 @@
 package main
 
 const dataFolder = "data"
+const size int64 = 1e9
 
 type factsetResource struct {
 	archive  string
@@ -14,8 +15,9 @@ type s3Config struct {
 	domain    string
 }
 
-type factsetConfig struct {
+type sftpConfig struct {
 	address  string
+	port     int
 	username string
-	password string
+	keyPath  string
 }

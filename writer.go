@@ -2,36 +2,31 @@ package main
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/minio/minio-go"
 	"strings"
 	"time"
+	"path"
 )
 
 type writer interface {
-	Write(resName string) error
+	Write(src string, resName string) error
 }
 
 type s3Writer struct {
-	config s3Config
+	s3Client s3Client
 }
 
-func (s3w s3Writer) Write(resName string) error {
-	s3Client, err := minio.New(s3w.config.domain, s3w.config.accKey, s3w.config.secretKey, true)
+func (s3w *s3Writer) Write(src string, resName string) error {
+	name := s3w.gets3ResName(resName)
+	p := path.Join(src, resName)
+	n, err := s3w.s3Client.PutObject(name, p)
 	if err != nil {
-		return err
-	}
-
-	name := gets3ResName(resName)
-	n, err := s3Client.FPutObject(s3w.config.bucket, name, dataFolder+"/"+resName, "")
-	if err != nil {
-		log.Error(err)
 		return err
 	}
 	log.Infof("Uploaded file [%s] of size [%d] successfully", name, n)
 	return nil
 }
 
-func gets3ResName(res string) string {
+func (s3w *s3Writer) gets3ResName(res string) string {
 	fileData := strings.Split(res, ".")
 	date := time.Now().Format("2006-01-02")
 	if len(fileData) >= 2 {
@@ -40,7 +35,7 @@ func gets3ResName(res string) string {
 		return name + "_" + date + "." + ext
 	} else if len(fileData) == 1 {
 		name := fileData[0]
-		return name + date
+		return name + "_" + date
 	}
 	return res
 }

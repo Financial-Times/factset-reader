@@ -9,9 +9,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"github.com/robfig/cron"
 )
 
-const serSeparator = ","
+const resSeparator = ","
 
 type httpHandler struct {
 	s service
@@ -42,37 +43,41 @@ func main() {
 		Desc:   "s3 domain of factset bucket",
 		EnvVar: "S3_DOMAIN",
 	})
-	factsetUser := app.String(cli.StringOpt{
-		Name:   "factsetUsername",
-		Desc:   "factset username",
-		EnvVar: "FACTSET_USER",
-	})
-
-	factsetPasswd := app.String(cli.StringOpt{
-		Name:   "factsetPasswd",
-		Desc:   "factset password",
-		EnvVar: "FACTSET_PWD",
-	})
-
-	factsetFTP := app.String(cli.StringOpt{
-		Name:   "factsetFTP",
-		Value:  "fts-sftp.factset.com",
-		Desc:   "factset ftp server address",
-		EnvVar: "FACTSET_FTP",
-	})
-
 	port := app.Int(cli.IntOpt{
 		Name:   "port",
 		Value:  8080,
 		Desc:   "application port",
 		EnvVar: "PORT",
 	})
+	factsetUser := app.String(cli.StringOpt{
+		Name:   "factsetUsername",
+		Desc:   "Factset username",
+		EnvVar: "FACTSET_USER",
+	})
+	factsetKey := app.String(cli.StringOpt{
+		Name:   "factsetKey",
+		Desc:   "Key to ssh key",
+		EnvVar: "FACTSET_KEY",
+	})
+	factsetFTP := app.String(cli.StringOpt{
+		Name:   "factsetFTP",
+		Value:  "fts-sftp.factset.com",
+		Desc:   "factset ftp server address",
+		EnvVar: "FACTSET_FTP",
+	})
+	factsetPort := app.Int(cli.IntOpt{
+		Name:   "factsetPort",
+		Value:  6671,
+		Desc:   "Factset connection port",
+		EnvVar: "FACTSET_PORT",
+	})
 
-	//resources := app.String(cli.StringOpt{
-	//	Name:   "factsetResources",
-	//	Desc:   "factset resources to be loaded",
-	//	EnvVar: "FACTSET_RESOURCES",
-	//})
+	resources := app.String(cli.StringOpt{
+		Name:   "factsetResources",
+		Value: "/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt",
+		Desc:   "factset resources to be loaded",
+		EnvVar: "FACTSET_RESOURCES",
+	})
 
 	app.Action = func() {
 		s3 := s3Config{
@@ -82,37 +87,35 @@ func main() {
 			domain:    *s3Domain,
 		}
 
-		fc := factsetConfig{
+		fc := sftpConfig{
 			address:  *factsetFTP,
 			username: *factsetUser,
-			password: *factsetPasswd,
+			keyPath:  *factsetKey,
+			port:     *factsetPort,
 		}
 
-		reader := factsetReader{config: fc}
-		writer := s3Writer{config: s3}
+		fsClient := sftpClient{config: fc}
+		reader := factsetReader{client: &fsClient}
+		s3Client := httpS3Client{config:s3}
+		writer := s3Writer{s3Client: &s3Client}
 
 		s := service{
-			reader: reader,
-			writer: writer,
+			reader: &reader,
+			writer: &writer,
 		}
 
-		//c := cron.New()
-		////run the upload every monday at 1:00 PM
-		//c.AddFunc("0 0 13 * * 1", func() {
-		//	err := s.UploadFromFactset(factsetRes)
-		//	if err != nil {
-		//		log.Error(err)
-		//	}
-		//})
-		//c.Start()
-		//go func(s service) {
-		//	err := s.UploadFromFactset(factsetRes)
-		//	if err != nil {
-		//		log.Error(err)
-		//	}
-		//}(s)
+		factsetRes := getResourceList(resources)
+		c := cron.New()
+		//run the upload every monday at 10:00 AM
+		c.AddFunc("0 0 10 30 * 5", func() {
+			err := s.UploadFromFactset(factsetRes)
+			if err != nil {
+				log.Error(err)
+			}
+		})
+		c.Start()
 
-		httpHandler := &httpHandler{s:s}
+		httpHandler := &httpHandler{s: s}
 		listen(httpHandler, *port)
 	}
 
@@ -124,7 +127,7 @@ func main() {
 
 func getResourceList(resources string) []factsetResource {
 	factsetRes := []factsetResource{}
-	resList := strings.Split(resources, serSeparator)
+	resList := strings.Split(resources, resSeparator)
 	for _, fulRes := range resList {
 		resPath := strings.Split(fulRes, ":")
 		if len(resPath) == 2 {
@@ -152,11 +155,13 @@ func listen(h *httpHandler, port int) {
 
 func (h httpHandler) createJob(w http.ResponseWriter, r *http.Request) {
 	factsetRes := factsetResource{
-		archive: "/datafeeds/edm/edm_premium/edm_premium_full",
-		fileName: "securityEntityMap",
+		archive:  "/datafeeds/edm/edm_premium/edm_premium_full",
+		fileName: "edm_security_entity_map.txt",
 	}
-	err := h.s.UploadFromFactset([]factsetResource{factsetRes})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	go func() {
+		err := h.s.UploadFromFactset([]factsetResource{factsetRes})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}()
 }
