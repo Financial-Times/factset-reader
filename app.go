@@ -114,7 +114,7 @@ func main() {
 
 		go func() {
 			sch := gocron.NewScheduler()
-			sch.Every(1).Monday().At("13:30").Do(func() {
+			sch.Every(1).Monday().At("13:45").Do(func() {
 				err := s.UploadFromFactset(factsetRes)
 				if err != nil {
 					log.Error(err)
