@@ -74,7 +74,7 @@ func main() {
 
 	resources := app.String(cli.StringOpt{
 		Name:   "factsetResources",
-		Value:  "/datafeeds/edm/edm_premium/edm_premium:edm_security_entity_map_update.txt",
+		Value:  "/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt,/datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt",
 		Desc:   "factset resources to be loaded",
 		EnvVar: "FACTSET_RESOURCES",
 	})
@@ -108,7 +108,7 @@ func main() {
 
 		go func() {
 			sch := gocron.NewScheduler()
-			sch.Every(1).Monday().At("08:30").Do(func() {
+			sch.Every(1).Monday().At("09:30").Do(func() {
 				err := s.UploadFromFactset(factsetRes)
 				if err != nil {
 					log.Error(err)
