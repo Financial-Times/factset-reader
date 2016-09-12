@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"os/signal"
+	"syscall"
+	"sync"
 )
 
 const resSeparator = ","
@@ -106,9 +109,12 @@ func main() {
 
 		factsetRes := getResourceList(*resources)
 
+		var consumerWaitGroup sync.WaitGroup
+		consumerWaitGroup.Add(1)
+
 		go func() {
 			sch := gocron.NewScheduler()
-			sch.Every(1).Monday().At("09:30").Do(func() {
+			sch.Every(1).Monday().At("11:55").Do(func() {
 				err := s.UploadFromFactset(factsetRes)
 				if err != nil {
 					log.Error(err)
@@ -119,6 +125,12 @@ func main() {
 
 		httpHandler := &httpHandler{s: s}
 		listen(httpHandler, *port)
+
+		ch := make(chan os.Signal)
+		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-ch
+		log.Info(sig.String())
+		consumerWaitGroup.Wait()
 	}
 
 	err := app.Run(os.Args)

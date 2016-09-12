@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"github.com/pkg/errors"
+	"fmt"
 )
 
 type factsetClient interface {
@@ -92,7 +94,17 @@ func (s *sftpClient) save(file *sftp.File, dest string) error {
 	}
 	defer downFile.Close()
 
-	_, err = io.Copy(downFile, io.LimitReader(file, size))
+	fileStat, err := file.Stat()
+	if err != nil {
+		return err
+	}
+	size := fileStat.Size()
+
+	n, err := io.Copy(downFile, io.LimitReader(file, size))
+	if n != size {
+		errMsg := fmt.Sprintf("Download stopped at [%d]", n)
+		return errors.New(errMsg)
+	}
 	if err != nil {
 		return err
 	}

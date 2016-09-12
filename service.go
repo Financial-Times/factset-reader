@@ -38,6 +38,10 @@ func (s service) UploadFromFactset(res []factsetResource) error {
 			return err
 		}
 		log.Infof("Finished writting resource [%s] to s3 in %d", r, time.Since(start))
+		err = os.RemoveAll(dataFolder)
+		if err != nil {
+			log.Error(err)
+		}
 	}
 	return nil
 }

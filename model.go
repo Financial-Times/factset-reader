@@ -1,7 +1,6 @@
 package main
 
 const dataFolder = "data"
-const size int64 = 1e9
 
 type factsetResource struct {
 	archive  string
