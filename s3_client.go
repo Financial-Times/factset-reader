@@ -9,15 +9,16 @@ type s3Client interface {
 }
 
 type httpS3Client struct {
-	config s3Config
+	client *minio.Client
+	bucket string
 }
 
-func (client *httpS3Client) PutObject(objectName string, filePath string) (int64, error) {
-	c := client.config
-	s3Client, err := minio.New(c.domain, c.accKey, c.secretKey, true)
-	if err != nil {
-		return 0, err
-	}
-	size, err := s3Client.FPutObject(c.bucket, objectName, filePath, "application/octet-stream")
+func NewS3Client(config s3Config) (s3Client, error) {
+	mClient, err := minio.New(config.domain, config.accKey, config.secretKey, true)
+	return &httpS3Client{client: mClient, bucket: config.bucket}, err
+}
+
+func (s3 *httpS3Client) PutObject(objectName string, filePath string) (int64, error) {
+	size, err := s3.client.FPutObject(s3.bucket, objectName, filePath, "application/octet-stream")
 	return size, err
 }

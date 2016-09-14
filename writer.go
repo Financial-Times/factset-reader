@@ -15,6 +15,12 @@ type s3Writer struct {
 	s3Client s3Client
 }
 
+func NewWriter(config s3Config) (writer, error) {
+	s3, err := NewS3Client(config)
+	return &s3Writer{s3Client: s3}, err
+
+}
+
 func (s3w *s3Writer) Write(src string, resName string) error {
 	name := s3w.gets3ResName(resName)
 	p := path.Join(src, resName)

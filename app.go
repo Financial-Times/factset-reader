@@ -10,9 +10,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"os/signal"
-	"syscall"
-	"sync"
 )
 
 const resSeparator = ","
@@ -97,40 +94,22 @@ func main() {
 			port:     *factsetPort,
 		}
 
-		fsClient := sftpClient{config: fc}
-		reader := factsetReader{client: &fsClient}
-		s3Client := httpS3Client{config: s3}
-		writer := s3Writer{s3Client: &s3Client}
-
 		s := service{
-			reader: &reader,
-			writer: &writer,
+			rdConfig: fc,
+			wrConfig: s3,
 		}
 
 		factsetRes := getResourceList(*resources)
-
-		var consumerWaitGroup sync.WaitGroup
-		consumerWaitGroup.Add(1)
-
 		go func() {
 			sch := gocron.NewScheduler()
-			sch.Every(1).Monday().At("13:45").Do(func() {
-				err := s.UploadFromFactset(factsetRes)
-				if err != nil {
-					log.Error(err)
-				}
+			sch.Every(1).Wednesday().At("10:30").Do(func() {
+				s.Fetch(factsetRes)
 			})
 			<-sch.Start()
 		}()
 
 		httpHandler := &httpHandler{s: s}
 		listen(httpHandler, *port)
-
-		ch := make(chan os.Signal)
-		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-		sig := <-ch
-		log.Info(sig.String())
-		consumerWaitGroup.Wait()
 	}
 
 	err := app.Run(os.Args)

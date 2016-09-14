@@ -6,48 +6,49 @@ import (
 	"io"
 	"os"
 	"path"
-	"strings"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type reader interface {
-	Init() error
+	Read(fRes factsetResource, dest string) (string, error)
 	Close()
-	ReadRes(fRes factsetResource, dest string) error
 }
 
 type factsetReader struct {
 	client factsetClient
 }
 
-func (sfr *factsetReader) Init() error {
-	return sfr.client.Init()
+func NewReader(config sftpConfig) (reader, error) {
+	fc := &sftpClient{config: config}
+	err := fc.Init()
+	return &factsetReader{client: fc}, err
 }
 
 func (sfr *factsetReader) Close() {
 	sfr.client.Close()
 }
 
-func (sfr *factsetReader) ReadRes(fRes factsetResource, dest string) error {
+func (sfr *factsetReader) Read(fRes factsetResource, dest string) (string, error) {
 	dir, res := path.Split(fRes.archive)
 	files, err := sfr.client.ReadDir(dir)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	lastVers, err := sfr.getLastVersion(files, res)
 	if err != nil {
-		return err
+		return lastVers, err
 	}
 
 	err = sfr.download(dir, lastVers, dest)
 	if err != nil {
-		return err
+		return lastVers, err
 	}
 
 	err = sfr.unzip(lastVers, fRes.fileName, dest)
-	return err
+	return lastVers, err
 }
 
 func (sfr *factsetReader) download(filePath string, fileName string, dest string) error {

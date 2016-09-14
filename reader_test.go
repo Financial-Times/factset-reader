@@ -159,8 +159,9 @@ func TestFactsetReader_ReadRes(t *testing.T) {
 		fileName: "edm_security_entity_map.txt",
 	}
 	dest := path.Join(testFolder, dataFolder)
-	err := fsReader.ReadRes(factsetRes, dest)
+	f, err := fsReader.Read(factsetRes, dest)
 	as.NoError(err)
+	as.Equal(f, "edm_premium_full_1532.zip")
 
 	file, err := os.Open(path.Join(dest, factsetRes.fileName))
 	as.NoError(err)

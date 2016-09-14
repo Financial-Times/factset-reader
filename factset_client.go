@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"io"
@@ -8,8 +10,6 @@ import (
 	"os"
 	"path"
 	"strconv"
-	"github.com/pkg/errors"
-	"fmt"
 )
 
 type factsetClient interface {
@@ -50,7 +50,7 @@ func (s *sftpClient) initSSHClient(config sftpConfig) error {
 		return err
 	}
 
-	tcpConn, err := ssh.Dial("tcp", config.address + ":" + strconv.Itoa(config.port), c)
+	tcpConn, err := ssh.Dial("tcp", config.address+":"+strconv.Itoa(config.port), c)
 	if err != nil {
 		return err
 	}
@@ -102,8 +102,8 @@ func (s *sftpClient) save(file *sftp.File, dest string) error {
 
 	n, err := io.Copy(downFile, io.LimitReader(file, size))
 	if n != size {
-		errMsg := fmt.Sprintf("Download stopped at [%d]", n)
-		return errors.New(errMsg)
+		e := fmt.Sprintf("Download stopped at [%d]", n)
+		return errors.New(e)
 	}
 	if err != nil {
 		return err
