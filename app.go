@@ -102,7 +102,7 @@ func main() {
 		factsetRes := getResourceList(*resources)
 		go func() {
 			sch := gocron.NewScheduler()
-			sch.Every(1).Wednesday().At("7:30").Do(func() {
+			sch.Every(1).Wednesday().At("13:30").Do(func() {
 				s.Fetch(factsetRes)
 			})
 			<-sch.Start()
