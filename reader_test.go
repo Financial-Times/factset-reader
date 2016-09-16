@@ -14,7 +14,7 @@ const testFolder = "test"
 func TestFactsetReader_GetLastVersion(t *testing.T) {
 	as := assert.New(t)
 
-	fsReader := factsetReader{}
+	fsReader := FactsetReader{}
 
 	fim := []fileInfoMock{
 		{
@@ -54,7 +54,7 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 func TestFactsetReader_Unzip(t *testing.T) {
 	as := assert.New(t)
 
-	fsReader := factsetReader{}
+	fsReader := FactsetReader{}
 
 	tc := struct {
 		archive string
@@ -96,7 +96,7 @@ func TestFactsetReader_Download(t *testing.T) {
 		},
 	}
 
-	fsReader := factsetReader{client: &sftpClient}
+	fsReader := FactsetReader{client: &sftpClient}
 
 	tc := struct {
 		path     string
@@ -152,7 +152,7 @@ func TestFactsetReader_ReadRes(t *testing.T) {
 		},
 	}
 
-	fsReader := factsetReader{client: &sftpClient}
+	fsReader := FactsetReader{client: &sftpClient}
 
 	factsetRes := factsetResource{
 		archive:  "test/edm_premium_full",

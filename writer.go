@@ -1,13 +1,14 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"path"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
-type writer interface {
+type Writer interface {
 	Write(src string, resName string) error
 }
 
@@ -15,10 +16,9 @@ type s3Writer struct {
 	s3Client s3Client
 }
 
-func NewWriter(config s3Config) (writer, error) {
+func NewWriter(config s3Config) (Writer, error) {
 	s3, err := NewS3Client(config)
 	return &s3Writer{s3Client: s3}, err
-
 }
 
 func (s3w *s3Writer) Write(src string, resName string) error {

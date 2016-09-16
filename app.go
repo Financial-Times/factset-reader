@@ -3,13 +3,14 @@ package main
 import (
 	"os"
 
+	"net/http"
+	"strconv"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jasonlvhit/gocron"
 	"github.com/jawher/mow.cli"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 const resSeparator = ","
@@ -79,6 +80,13 @@ func main() {
 		EnvVar: "FACTSET_RESOURCES",
 	})
 
+	runningTime := app.String(cli.StringOpt{
+		Name:   "runningTime",
+		Value:  "1 12 00", // default run the job every Monday at 12:00 PM
+		Desc:   "Time at which the job will be run",
+		EnvVar: "RUNNING_TIME",
+	})
+
 	app.Action = func() {
 		s3 := s3Config{
 			accKey:    *awsAccessKey,
@@ -102,7 +110,7 @@ func main() {
 		factsetRes := getResourceList(*resources)
 		go func() {
 			sch := gocron.NewScheduler()
-			sch.Every(1).Wednesday().At("13:30").Do(func() {
+			schedule(sch, *runningTime, func() {
 				s.Fetch(factsetRes)
 			})
 			<-sch.Start()
@@ -115,6 +123,48 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Errorf("[%v]", err)
+	}
+}
+
+func schedule(scheduler *gocron.Scheduler, time string, job func()) {
+	timeVars := strings.Split(time, " ")
+	if len(timeVars) == 3 {
+		weekDay, err := strconv.Atoi(timeVars[0])
+		if err != nil {
+			log.Errorf("Cannot parse running time [%s]", time)
+		}
+
+		runningTime := timeVars[1] + ":" + timeVars[2]
+		var j *gocron.Job
+		j = scheduler.Every(1)
+		switch weekDay {
+		case 0:
+			j = j.Sunday()
+			break
+		case 1:
+			j = j.Monday()
+			break
+		case 2:
+			j = j.Tuesday()
+			break
+		case 3:
+			j = j.Wednesday()
+			break
+		case 4:
+			j = j.Thursday()
+			break
+		case 5:
+			j = j.Friday()
+			break
+		case 6:
+			j = j.Saturday()
+			break
+		default:
+			log.Errorf("Cannot parse running time [%s]", time)
+		}
+		j.At(runningTime).Do(job)
+	} else {
+		scheduler.Every(1).Monday().At("12:00").Do(job)
 	}
 }
 

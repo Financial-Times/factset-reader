@@ -1,11 +1,12 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"path"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type service struct {

@@ -2,13 +2,14 @@ package main
 
 import (
 	"archive/zip"
-	log "github.com/Sirupsen/logrus"
 	"io"
 	"os"
 	"path"
 	"regexp"
 	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type reader interface {
@@ -16,21 +17,21 @@ type reader interface {
 	Close()
 }
 
-type factsetReader struct {
+type FactsetReader struct {
 	client factsetClient
 }
 
 func NewReader(config sftpConfig) (reader, error) {
 	fc := &sftpClient{config: config}
 	err := fc.Init()
-	return &factsetReader{client: fc}, err
+	return &FactsetReader{client: fc}, err
 }
 
-func (sfr *factsetReader) Close() {
+func (sfr *FactsetReader) Close() {
 	sfr.client.Close()
 }
 
-func (sfr *factsetReader) Read(fRes factsetResource, dest string) (string, error) {
+func (sfr *FactsetReader) Read(fRes factsetResource, dest string) (string, error) {
 	dir, res := path.Split(fRes.archive)
 	files, err := sfr.client.ReadDir(dir)
 	if err != nil {
@@ -51,7 +52,7 @@ func (sfr *factsetReader) Read(fRes factsetResource, dest string) (string, error
 	return lastVers, err
 }
 
-func (sfr *factsetReader) download(filePath string, fileName string, dest string) error {
+func (sfr *FactsetReader) download(filePath string, fileName string, dest string) error {
 	fullName := path.Join(filePath, fileName)
 	log.Infof("Downloading file [%s]", fullName)
 
@@ -64,7 +65,7 @@ func (sfr *factsetReader) download(filePath string, fileName string, dest string
 	return nil
 }
 
-func (sfr *factsetReader) getLastVersion(files []os.FileInfo, searchedRes string) (string, error) {
+func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedRes string) (string, error) {
 	recFile := &struct {
 		name string
 		vers int
@@ -93,7 +94,7 @@ func (sfr *factsetReader) getLastVersion(files []os.FileInfo, searchedRes string
 	return recFile.name, nil
 }
 
-func (sfr *factsetReader) unzip(archive string, name string, dest string) error {
+func (sfr *FactsetReader) unzip(archive string, name string, dest string) error {
 	r, err := zip.OpenReader(path.Join(dest, archive))
 	if err != nil {
 		return err
