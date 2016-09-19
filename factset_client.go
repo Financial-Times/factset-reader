@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
+
+	"github.com/pkg/errors"
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
 
 type factsetClient interface {
@@ -26,11 +26,8 @@ type sftpClient struct {
 }
 
 func (s *sftpClient) getSSHConfig(keyPath string, username string) (*ssh.ClientConfig, error) {
-	key, err := ioutil.ReadFile(keyPath)
-	if err != nil {
-		return &ssh.ClientConfig{}, err
-	}
-	signer, err := ssh.ParsePrivateKey(key)
+	key := os.Getenv("FACTSET_KEY")
+	signer, err := ssh.ParsePrivateKey([]byte(key))
 	if err != nil {
 		return &ssh.ClientConfig{}, err
 	}

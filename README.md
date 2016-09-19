@@ -19,7 +19,7 @@ The awsAccessKey, awsSecretKey, bucketName, factsetUser, factsetKey arguments ar
 
 The resources argument specifies a comma separated list of files to be downloaded from Factset FTP server. Because every file is inside an archive, the service will first download the archive, unzip the file and write it to S3 bucket. A resource has the format archive_path:file, example: /datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt, where  /datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full is the path of the archive without version and edm_bbg_ids.txt is the file to be extracted from this archive. On the Factset FTP server the archive name will contain also the data version, but it is enough for this service to provide the archive name without the version and it will download the latest one.
 
-The runningTime argument specifies when the job should run. It has the format "day_of_week hour minute". Example: "1 12 OO" will run on every Monday at 12:00 PM.
+The runningTime argument specifies when the job should run. It has the format "day_of_week hour minute". Example: "1 12 OO" will run on every Monday at 12:00 PM. The day_of_week parameter takes values from 0 to 6, corresponding to Sunday-Saturday.
 
 After downloading the files from Factset FTP server, the service will write them to the specified Amamzon S3 bucket. The file written to S3 will have as name the original name of the file appended with the current date.
 
