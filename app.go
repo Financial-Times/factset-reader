@@ -98,7 +98,7 @@ func main() {
 		fc := sftpConfig{
 			address:  *factsetFTP,
 			username: *factsetUser,
-			keyPath:  *factsetKey,
+			key:      *factsetKey,
 			port:     *factsetPort,
 		}
 

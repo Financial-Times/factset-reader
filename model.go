@@ -18,5 +18,5 @@ type sftpConfig struct {
 	address  string
 	port     int
 	username string
-	keyPath  string
+	key      string
 }

@@ -25,8 +25,7 @@ type sftpClient struct {
 	sftp   *sftp.Client
 }
 
-func (s *sftpClient) getSSHConfig(keyPath string, username string) (*ssh.ClientConfig, error) {
-	key := os.Getenv("FACTSET_KEY")
+func (s *sftpClient) getSSHConfig(username string, key string) (*ssh.ClientConfig, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(key))
 	if err != nil {
 		return &ssh.ClientConfig{}, err
@@ -42,7 +41,7 @@ func (s *sftpClient) getSSHConfig(keyPath string, username string) (*ssh.ClientC
 }
 
 func (s *sftpClient) initSSHClient(config sftpConfig) error {
-	c, err := s.getSSHConfig(s.config.keyPath, s.config.username)
+	c, err := s.getSSHConfig(s.config.key, s.config.username)
 	if err != nil {
 		return err
 	}
