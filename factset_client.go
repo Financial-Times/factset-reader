@@ -41,7 +41,7 @@ func (s *sftpClient) getSSHConfig(username string, key string) (*ssh.ClientConfi
 }
 
 func (s *sftpClient) initSSHClient(config sftpConfig) error {
-	c, err := s.getSSHConfig(s.config.key, s.config.username)
+	c, err := s.getSSHConfig(s.config.username, s.config.key)
 	if err != nil {
 		return err
 	}
