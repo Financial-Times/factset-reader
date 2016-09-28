@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"os"
 	"path"
 	"sync"
@@ -12,9 +13,17 @@ import (
 type service struct {
 	rdConfig sftpConfig
 	wrConfig s3Config
+	files    []factsetResource
 }
 
-func (s service) Fetch(res []factsetResource) {
+func (s service) forceImport(rw http.ResponseWriter, req *http.Request) {
+	go s.Fetch()
+	log.Info("Triggered fetching")
+}
+
+func (s service) Fetch() {
+	res := s.files
+
 	errors := make(chan error)
 	var wg sync.WaitGroup
 	wg.Add(len(res))

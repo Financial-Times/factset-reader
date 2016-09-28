@@ -20,7 +20,6 @@ type httpHandler struct {
 }
 
 func main() {
-
 	app := cli.App("Factset reader", "Reads data from factset ftp server and stores it to amazon s3")
 
 	awsAccessKey := app.String(cli.StringOpt{
@@ -105,13 +104,14 @@ func main() {
 		s := service{
 			rdConfig: fc,
 			wrConfig: s3,
+			files:    getResourceList(*resources),
 		}
 
-		factsetRes := getResourceList(*resources)
+		log.Printf("Resource list: %v", s.files)
 		go func() {
 			sch := gocron.NewScheduler()
 			schedule(sch, *runningTime, func() {
-				s.Fetch(factsetRes)
+				s.Fetch()
 			})
 			<-sch.Start()
 		}()
@@ -189,6 +189,7 @@ func listen(h *httpHandler, port int) {
 	r := mux.NewRouter()
 	r.HandleFunc("/__health", h.health()).Methods("GET")
 	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
+	r.HandleFunc("/force-import", h.s.forceImport).Methods("POST")
 	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
 	if err != nil {
 		log.Error(err)
