@@ -6,9 +6,9 @@ import (
 )
 
 func (h *httpHandler) health() func(w http.ResponseWriter, r *http.Request) {
-	return fthealth.Handler("FinancialInstrumentsTransformer", "Financial Instrument Transformer healthcheck")
+	return fthealth.Handler("FactsetReader", "Factset Reader healthcheck")
 }
 
 func (h *httpHandler) gtg() func(w http.ResponseWriter, r *http.Request) {
-	return fthealth.Handler("FinancialInstrumentsTransformer", "Financial Instrument Transformer healthcheck")
+	return fthealth.Handler("FactsetReader", "Factset Reader healthcheck")
 }
