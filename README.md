@@ -13,7 +13,20 @@ or update:
 
 # Running
 
-`$GOPATH/bin/factset-reader --awsAccessKey=xxx --awsSecretKey=xxx --bucketName=com.ft.coco-factset-data --s3Domain=s3.amazonaws.com --port=8080 --factsetUser=xxx --factsetKey=xxx --factsetFTP=fts-sftp.factset.com --factsetPort=6671 --resources=/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt,/datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt --runningTime="1 12 00"`
+```
+$GOPATH/bin/factset-reader
+--awsAccessKey=xxx
+--awsSecretKey=xxx
+--bucketName=com.ft.coco-factset-data
+--s3Domain=s3.amazonaws.com
+--port=8080
+--factsetUser=xxx
+--factsetKey=xxx
+--factsetFTP=fts-sftp.factset.com
+--factsetPort=6671
+--resources=/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt,/datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt
+--runningTime="1 12 00"
+```
 
 The awsAccessKey, awsSecretKey, bucketName, factsetUser, factsetKey arguments are mandatory, and represent authentication credentials for S3 and Factset FTP server. The other arguments are optional and they will default at reading the edm_security_entity_map.txt and edm_bbg_ids.txt files from Factset and writting them to S3, every Monday at 12:00 PM.
 
@@ -25,9 +38,11 @@ After downloading the files from Factset FTP server, the service will write them
 
 # Endpoints
 
-Force-import (initiate importing manually): http://localhost:8080/force-import -XPOST
+Force-import (initiate importing manually):
+
+`http://localhost:8080/force-import -XPOST`
 
 ## Admin Endpoints
-Health checks: http://localhost:8080/__health
+Health checks: `http://localhost:8080/__health`
 
-Good to go: http://localhost:8080/__gtg
+Good to go: `http://localhost:8080/__gtg`
