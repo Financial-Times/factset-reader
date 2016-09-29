@@ -25,6 +25,8 @@ After downloading the files from Factset FTP server, the service will write them
 
 # Endpoints
 
+Force-import (initiate importing manually): http://localhost:8080/force-import -XPOST
+
 ## Admin Endpoints
 Health checks: http://localhost:8080/__health
 
