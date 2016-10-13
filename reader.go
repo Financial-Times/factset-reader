@@ -71,14 +71,17 @@ func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedRes string
 		vers int
 	}{}
 
-	r := regexp.MustCompile("[0-9]+")
+	r := regexp.MustCompile("[0-9]+\\.zip$")
 	for _, file := range files {
 		name := file.Name()
 		if strings.Contains(name, searchedRes) {
-			v, err := strconv.Atoi(r.FindStringSubmatch(name)[0])
+			s := r.FindStringSubmatch(name)[0]
+
+			v, err := strconv.Atoi(strings.TrimSuffix(s, ".zip"))
 			if err != nil {
 				return "", err
 			}
+
 			if recFile == nil {
 				recFile.name = name
 				recFile.vers = v
