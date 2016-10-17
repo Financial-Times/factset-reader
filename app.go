@@ -15,6 +15,16 @@ import (
 
 const resSeparator = ","
 
+var daysMap = map[int]func(j *gocron.Job) *gocron.Job{
+	0: func(j *gocron.Job) *gocron.Job { return j.Sunday() },
+	1: func(j *gocron.Job) *gocron.Job { return j.Monday() },
+	2: func(j *gocron.Job) *gocron.Job { return j.Tuesday() },
+	3: func(j *gocron.Job) *gocron.Job { return j.Wednesday() },
+	4: func(j *gocron.Job) *gocron.Job { return j.Thursday() },
+	5: func(j *gocron.Job) *gocron.Job { return j.Friday() },
+	6: func(j *gocron.Job) *gocron.Job { return j.Saturday() },
+}
+
 type httpHandler struct {
 	s service
 }
@@ -137,31 +147,8 @@ func schedule(scheduler *gocron.Scheduler, time string, job func()) {
 		runningTime := timeVars[1] + ":" + timeVars[2]
 		var j *gocron.Job
 		j = scheduler.Every(1)
-		switch weekDay {
-		case 0:
-			j = j.Sunday()
-			break
-		case 1:
-			j = j.Monday()
-			break
-		case 2:
-			j = j.Tuesday()
-			break
-		case 3:
-			j = j.Wednesday()
-			break
-		case 4:
-			j = j.Thursday()
-			break
-		case 5:
-			j = j.Friday()
-			break
-		case 6:
-			j = j.Saturday()
-			break
-		default:
-			log.Errorf("Cannot parse running time [%s]", time)
-		}
+		dayOfWeekScheduler := daysMap[weekDay]
+		j = dayOfWeekScheduler(j)
 		j.At(runningTime).Do(job)
 	} else {
 		scheduler.Every(1).Monday().At("12:00").Do(job)
