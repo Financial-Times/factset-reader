@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const testFolder = "test"
@@ -18,11 +19,11 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 
 	fim := []fileInfoMock{
 		{
-			name:  "edm_premium_full_1532",
+			name:  "edm_premium_full_1532.zip",
 			mtime: time.Date(2016, time.September, 6, 23, 0, 0, 0, time.UTC),
 		},
 		{
-			name:  "edm_premium_full_1547",
+			name:  "edm_premium_full_1547.zip",
 			mtime: time.Date(2016, time.September, 7, 23, 0, 0, 0, time.UTC),
 		},
 	}
@@ -40,7 +41,7 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 		{
 			res:      "edm_premium_full",
 			files:    fis,
-			expected: "edm_premium_full_1547",
+			expected: "edm_premium_full_1547.zip",
 		},
 	}
 
