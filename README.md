@@ -1,5 +1,7 @@
 # Factset Reader (factset-reader)
 
+[![Circle CI](https://circleci.com/gh/Financial-Times/factset-reader/tree/master.png?style=shield)](https://circleci.com/gh/Financial-Times/factset-reader/tree/master)
+
 __A service for reading files from Factset FTP (SFTP) server and writing them into an Amazon S3 bucket.__
 # Installation
 
