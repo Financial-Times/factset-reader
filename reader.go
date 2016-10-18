@@ -12,17 +12,17 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-type reader interface {
+type Reader interface {
 	Read(fRes factsetResource, dest string) (string, error)
 	Close()
 }
 
 type FactsetReader struct {
-	client factsetClient
+	client FactsetClient
 }
 
-func NewReader(config sftpConfig) (reader, error) {
-	fc := &sftpClient{config: config}
+func NewReader(config sftpConfig) (Reader, error) {
+	fc := &SFTPClient{config: config}
 	err := fc.Init()
 	return &FactsetReader{client: fc}, err
 }
@@ -74,23 +74,23 @@ func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedRes string
 	r := regexp.MustCompile("[0-9]+\\.zip$")
 	for _, file := range files {
 		name := file.Name()
-		if strings.Contains(name, searchedRes) {
-			s := r.FindStringSubmatch(name)[0]
+		if !strings.Contains(name, searchedRes) {
+			continue
+		}
+		s := r.FindStringSubmatch(name)[0]
 
-			v, err := strconv.Atoi(strings.TrimSuffix(s, ".zip"))
-			if err != nil {
-				return "", err
-			}
+		v, err := strconv.Atoi(strings.TrimSuffix(s, ".zip"))
+		if err != nil {
+			return "", err
+		}
 
-			if recFile == nil {
+		if recFile == nil {
+			recFile.name = name
+			recFile.vers = v
+		} else {
+			if v > recFile.vers {
 				recFile.name = name
 				recFile.vers = v
-			} else {
-				if v > recFile.vers {
-					recFile.name = name
-					recFile.vers = v
-				}
-
 			}
 		}
 	}
@@ -105,22 +105,24 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 	defer r.Close()
 
 	for _, f := range r.File {
-		if name == f.Name {
-			rc, err := f.Open()
-			if err != nil {
-				return err
-			}
-			file, err := os.Create(path.Join(dest, f.Name))
-			if err != nil {
-				return err
-			}
-			_, err = io.Copy(file, rc)
-			if err != nil {
-				return err
-			}
-			file.Close()
-			rc.Close()
+		if name != f.Name {
+			continue
 		}
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		file, err := os.Create(path.Join(dest, f.Name))
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(file, rc)
+		if err != nil {
+			return err
+		}
+		file.Close()
+		rc.Close()
+
 	}
 	return nil
 }

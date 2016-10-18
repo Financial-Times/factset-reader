@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const dbFolder = testFolder + "/db"
@@ -26,10 +27,10 @@ func TestS3Writer_Gets3ResName(t *testing.T) {
 		},
 	}
 
-	s3Writer := s3Writer{}
+	wr := S3Writer{}
 
 	for _, tc := range tcs {
-		r := s3Writer.gets3ResName(tc.resName)
+		r := wr.gets3ResName(tc.resName)
 		as.Equal(r, tc.expected)
 	}
 }
@@ -61,8 +62,8 @@ func TestS3Writer_Write(t *testing.T) {
 			return int64(n), nil
 		},
 	}
-	s3Writer := s3Writer{s3Client: &httpS3Client}
-	err := s3Writer.Write(testFolder, "edm_security_entity_map_test.txt")
+	wr := S3Writer{s3Client: &httpS3Client}
+	err := wr.Write(testFolder, "edm_security_entity_map_test.txt")
 	as.NoError(err)
 
 	dbFile, err := os.Open(dbFolder + "/" + "edm_security_entity_map_test" + "_" + time.Now().Format("2006-01-02") + ".txt")

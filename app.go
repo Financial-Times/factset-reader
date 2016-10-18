@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Financial-Times/go-fthealth/v1a"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jasonlvhit/gocron"
@@ -15,7 +16,7 @@ import (
 
 const resSeparator = ","
 
-var daysMap = map[int]func(j *gocron.Job) *gocron.Job{
+var daysSchedulers = map[int]func(j *gocron.Job) *gocron.Job{
 	0: func(j *gocron.Job) *gocron.Job { return j.Sunday() },
 	1: func(j *gocron.Job) *gocron.Job { return j.Monday() },
 	2: func(j *gocron.Job) *gocron.Job { return j.Tuesday() },
@@ -147,7 +148,7 @@ func schedule(scheduler *gocron.Scheduler, time string, job func()) {
 		runningTime := timeVars[1] + ":" + timeVars[2]
 		var j *gocron.Job
 		j = scheduler.Every(1)
-		dayOfWeekScheduler := daysMap[weekDay]
+		dayOfWeekScheduler := daysSchedulers[weekDay]
 		j = dayOfWeekScheduler(j)
 		j.At(runningTime).Do(job)
 	} else {
@@ -174,8 +175,8 @@ func getResourceList(resources string) []factsetResource {
 func listen(h *httpHandler, port int) {
 	log.Infof("Listening on port: %d", port)
 	r := mux.NewRouter()
-	r.HandleFunc("/__health", h.health()).Methods("GET")
-	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
+	r.HandleFunc("/__health", v1a.Handler("Factset Reader Healthchecks", "Checks for accessing Factset server and Amazon S3 bucket", h.factsetHealthcheck(), h.amazonS3Healthcheck()))
+	r.HandleFunc("/__gtg", h.goodToGo)
 	r.HandleFunc("/force-import", h.s.forceImport).Methods("POST")
 	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
 	if err != nil {

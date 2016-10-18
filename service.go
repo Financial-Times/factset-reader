@@ -45,8 +45,8 @@ func (s service) Fetch() {
 			if err != nil {
 				errors <- err
 				return
-
 			}
+
 			defer func() {
 				os.Remove(path.Join(dataFolder, fileName))
 				os.Remove(path.Join(dataFolder, res.fileName))
@@ -78,4 +78,15 @@ func (s service) Fetch() {
 	}()
 
 	wg.Wait()
+}
+
+func (s service) checkConnectivityToFactset() error {
+	reader, err := NewReader(s.rdConfig)
+	reader.Close()
+	return err
+}
+
+func (s service) checkConnectivityToAmazonS3() error {
+	_, err := NewWriter(s.wrConfig)
+	return err
 }
