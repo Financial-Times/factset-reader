@@ -33,15 +33,18 @@ func (s3w *S3Writer) Write(src string, resName string) error {
 }
 
 func (s3w *S3Writer) gets3ResName(res string) string {
+	if res == "" {
+		return res
+	}
+
 	fileData := strings.Split(res, ".")
 	date := time.Now().Format("2006-01-02")
-	if len(fileData) >= 2 {
-		name := fileData[0]
-		ext := fileData[1]
-		return name + "_" + date + "." + ext
-	} else if len(fileData) == 1 {
-		name := fileData[0]
-		return name + "_" + date
+
+	if len(fileData) == 1 {
+		return fileData[0] + "_" + date
 	}
-	return res
+	ext := fileData[len(fileData)-1]
+	name := strings.TrimSuffix(res, "."+ext)
+	return name + "_" + date + "." + ext
+
 }

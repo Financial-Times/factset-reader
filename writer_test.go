@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -22,8 +23,48 @@ func TestS3Writer_Gets3ResName(t *testing.T) {
 			expected: "edm_premium_full_1532" + "_" + time.Now().Format("2006-01-02") + ".zip",
 		},
 		{
+			resName:  "edm_premium_full_1532.zip.txt",
+			expected: "edm_premium_full_1532.zip" + "_" + time.Now().Format("2006-01-02") + ".txt",
+		},
+	}
+
+	wr := S3Writer{}
+
+	for _, tc := range tcs {
+		r := wr.gets3ResName(tc.resName)
+		as.Equal(r, tc.expected)
+	}
+}
+
+func TestS3Writer_Gets3ResName_NoExtension(t *testing.T) {
+	as := assert.New(t)
+	tcs := []struct {
+		resName  string
+		expected string
+	}{
+		{
 			resName:  "edm_premium_full_1532",
 			expected: "edm_premium_full_1532" + "_" + time.Now().Format("2006-01-02"),
+		},
+	}
+
+	wr := S3Writer{}
+
+	for _, tc := range tcs {
+		r := wr.gets3ResName(tc.resName)
+		as.Equal(r, tc.expected)
+	}
+}
+
+func TestS3Writer_Gets3ResName_EmptyFilename(t *testing.T) {
+	as := assert.New(t)
+	tcs := []struct {
+		resName  string
+		expected string
+	}{
+		{
+			resName:  "",
+			expected: "",
 		},
 	}
 
@@ -70,5 +111,18 @@ func TestS3Writer_Write(t *testing.T) {
 	as.NoError(err)
 	dbFile.Close()
 	defer as.NoError(os.RemoveAll(dbFolder))
+}
 
+func TestS3Writer_Write_Error(t *testing.T) {
+	as := assert.New(t)
+
+	httpS3Client := httpS3ClientMock{
+		putObjectMock: func(objectName string, filePath string) (int64, error) {
+			return int64(0), errors.New("Could not connect to Amazaon S3")
+		},
+	}
+	wr := S3Writer{s3Client: &httpS3Client}
+	err := wr.Write(testFolder, "edm_security_entity_map_test.txt")
+	as.NotNil(err)
+	as.Error(err)
 }

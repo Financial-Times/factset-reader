@@ -84,14 +84,12 @@ func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedRes string
 			return "", err
 		}
 
-		if recFile == nil {
+		if recFile.name == "" {
 			recFile.name = name
 			recFile.vers = v
-		} else {
-			if v > recFile.vers {
-				recFile.name = name
-				recFile.vers = v
-			}
+		} else if v > recFile.vers {
+			recFile.name = name
+			recFile.vers = v
 		}
 	}
 	return recFile.name, nil
