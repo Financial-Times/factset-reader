@@ -85,7 +85,7 @@ func main() {
 
 	resources := app.String(cli.StringOpt{
 		Name:   "factsetResources",
-		Value:  "/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt,/datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt",
+		Value:  "/datafeeds/symbology/sym_hub/sym_hub_v1_full:sym_coverage.txt,/datafeeds/symbology/sym_bbg/sym_bbg_v1_full:sym_bbg.txt,/datafeeds/symbology/sym_sec_entity/sym_sec_entity_v1_full:sym_sec_entity.txt,/datafeeds/entity/ent_entity_advanced/ent_entity_advanced_v1_full:ent_entity_coverage.txt",
 		Desc:   "factset resources to be loaded",
 		EnvVar: "FACTSET_RESOURCES",
 	})
