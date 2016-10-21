@@ -6,6 +6,7 @@ import (
 
 type S3Client interface {
 	PutObject(objectName string, filePath string) (int64, error)
+	BucketExists(bucket string) (bool, error)
 }
 
 type HTTPS3Client struct {
@@ -21,4 +22,8 @@ func NewS3Client(config s3Config) (S3Client, error) {
 func (s3 *HTTPS3Client) PutObject(objectName string, filePath string) (int64, error) {
 	size, err := s3.client.FPutObject(s3.bucket, objectName, filePath, "application/octet-stream")
 	return size, err
+}
+
+func (s3 *HTTPS3Client) BucketExists(bucket string) (bool, error) {
+	return s3.client.BucketExists(bucket)
 }

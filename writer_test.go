@@ -102,6 +102,9 @@ func TestS3Writer_Write(t *testing.T) {
 			f.Close()
 			return int64(n), nil
 		},
+		bucketExistsMock: func(bucket string) (bool, error) {
+			return true, nil
+		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
 	err := wr.Write(testFolder, "edm_security_entity_map_test.txt")
@@ -119,6 +122,9 @@ func TestS3Writer_Write_Error(t *testing.T) {
 	httpS3Client := httpS3ClientMock{
 		putObjectMock: func(objectName string, filePath string) (int64, error) {
 			return int64(0), errors.New("Could not connect to Amazaon S3")
+		},
+		bucketExistsMock: func(bucket string) (bool, error) {
+			return true, nil
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}

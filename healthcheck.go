@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Financial-Times/go-fthealth/v1a"
+	log "github.com/Sirupsen/logrus"
 )
 
 func (h *httpHandler) factsetHealthcheck() v1a.Check {
@@ -47,10 +48,12 @@ func (h *httpHandler) checkConnectivityToS3() (string, error) {
 
 func (h *httpHandler) goodToGo(w http.ResponseWriter, r *http.Request) {
 	if _, err := h.checkConnectivityToFactset(); err != nil {
+		log.Error(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 	if _, err := h.checkConnectivityToS3(); err != nil {
+		log.Error(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}

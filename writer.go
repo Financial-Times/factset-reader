@@ -43,8 +43,7 @@ func (s3w *S3Writer) gets3ResName(res string) string {
 	if len(fileData) == 1 {
 		return fileData[0] + "_" + date
 	}
-	ext := fileData[len(fileData)-1]
-	name := strings.TrimSuffix(res, "."+ext)
+	ext := fileData[len(fileData) - 1]
+	name := strings.TrimSuffix(res, "." + ext)
 	return name + "_" + date + "." + ext
-
 }

@@ -24,23 +24,23 @@ func (s service) forceImport(rw http.ResponseWriter, req *http.Request) {
 func (s service) Fetch() {
 	res := s.files
 
-	errors := make(chan error)
+	errorsCh := make(chan error)
 	var wg sync.WaitGroup
 	wg.Add(len(res))
 
 	for _, r := range res {
 		go func(res factsetResource) {
 			defer wg.Done()
-			err := s.fetchResource(r)
-			errors <- err
+			err := s.fetchResource(res)
+			errorsCh <- err
 		}(r)
 	}
 
-	go handleErrors(errors)
+	go handleErrors(errorsCh)
 	wg.Wait()
 }
 
-func (s service) fetchResource (res factsetResource) error {
+func (s service) fetchResource(res factsetResource) error {
 	start := time.Now()
 
 	rd, err := NewReader(s.rdConfig)
@@ -74,7 +74,7 @@ func (s service) fetchResource (res factsetResource) error {
 	return nil
 }
 
-func handleErrors (errors chan error) {
+func handleErrors(errors chan error) {
 	for e := range errors {
 		if e != nil {
 			log.Error(e)
@@ -89,6 +89,13 @@ func (s service) checkConnectivityToFactset() error {
 }
 
 func (s service) checkConnectivityToAmazonS3() error {
-	_, err := NewWriter(s.wrConfig)
-	return err
+	s3, err := NewS3Client(s.wrConfig)
+	if err != nil {
+		return err
+	}
+	_, err = s3.BucketExists(s.wrConfig.bucket)
+	if err != nil {
+		return err
+	}
+	return nil
 }
