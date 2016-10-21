@@ -12,16 +12,16 @@ type Writer interface {
 	Write(src string, resName string) error
 }
 
-type s3Writer struct {
-	s3Client s3Client
+type S3Writer struct {
+	s3Client S3Client
 }
 
 func NewWriter(config s3Config) (Writer, error) {
 	s3, err := NewS3Client(config)
-	return &s3Writer{s3Client: s3}, err
+	return &S3Writer{s3Client: s3}, err
 }
 
-func (s3w *s3Writer) Write(src string, resName string) error {
+func (s3w *S3Writer) Write(src string, resName string) error {
 	name := s3w.gets3ResName(resName)
 	p := path.Join(src, resName)
 	n, err := s3w.s3Client.PutObject(name, p)
@@ -32,16 +32,18 @@ func (s3w *s3Writer) Write(src string, resName string) error {
 	return nil
 }
 
-func (s3w *s3Writer) gets3ResName(res string) string {
+func (s3w *S3Writer) gets3ResName(res string) string {
+	if res == "" {
+		return res
+	}
+
 	fileData := strings.Split(res, ".")
 	date := time.Now().Format("2006-01-02")
-	if len(fileData) >= 2 {
-		name := fileData[0]
-		ext := fileData[1]
-		return name + "_" + date + "." + ext
-	} else if len(fileData) == 1 {
-		name := fileData[0]
-		return name + "_" + date
+
+	if len(fileData) == 1 {
+		return fileData[0] + "_" + date
 	}
-	return res
+	ext := fileData[len(fileData) - 1]
+	name := strings.TrimSuffix(res, "." + ext)
+	return name + "_" + date + "." + ext
 }

@@ -12,20 +12,20 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-type factsetClient interface {
+type FactsetClient interface {
 	Init() error
 	Close()
 	ReadDir(dir string) ([]os.FileInfo, error)
 	Download(path string, dest string) error
 }
 
-type sftpClient struct {
+type SFTPClient struct {
 	config sftpConfig
 	ssh    *ssh.Client
 	sftp   *sftp.Client
 }
 
-func (s *sftpClient) getSSHConfig(username string, key string) (*ssh.ClientConfig, error) {
+func (s *SFTPClient) getSSHConfig(username string, key string) (*ssh.ClientConfig, error) {
 	signer, err := ssh.ParsePrivateKey([]byte(key))
 	if err != nil {
 		return &ssh.ClientConfig{}, err
@@ -40,7 +40,7 @@ func (s *sftpClient) getSSHConfig(username string, key string) (*ssh.ClientConfi
 	return c, nil
 }
 
-func (s *sftpClient) initSSHClient(config sftpConfig) error {
+func (s *SFTPClient) initSSHClient(config sftpConfig) error {
 	c, err := s.getSSHConfig(s.config.username, s.config.key)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (s *sftpClient) initSSHClient(config sftpConfig) error {
 	return nil
 }
 
-func (s *sftpClient) Init() error {
+func (s *SFTPClient) Init() error {
 	err := s.initSSHClient(s.config)
 	if err != nil {
 		return err
@@ -68,11 +68,11 @@ func (s *sftpClient) Init() error {
 	return nil
 }
 
-func (s *sftpClient) ReadDir(dir string) ([]os.FileInfo, error) {
+func (s *SFTPClient) ReadDir(dir string) ([]os.FileInfo, error) {
 	return s.sftp.ReadDir(dir)
 }
 
-func (s sftpClient) Download(path string, dest string) error {
+func (s SFTPClient) Download(path string, dest string) error {
 	file, err := s.sftp.Open(path)
 	if err != nil {
 		return err
@@ -81,8 +81,8 @@ func (s sftpClient) Download(path string, dest string) error {
 	return s.save(file, dest)
 }
 
-func (s *sftpClient) save(file *sftp.File, dest string) error {
-	os.Mkdir(dest, 0755)
+func (s *SFTPClient) save(file *sftp.File, dest string) error {
+	os.Mkdir(dest, 0700)
 	_, fileName := path.Split(file.Name())
 	downFile, err := os.Create(path.Join(dest, fileName))
 	if err != nil {
@@ -108,7 +108,7 @@ func (s *sftpClient) save(file *sftp.File, dest string) error {
 	return nil
 }
 
-func (s *sftpClient) Close() {
+func (s *SFTPClient) Close() {
 	s.ssh.Close()
 	s.sftp.Close()
 }

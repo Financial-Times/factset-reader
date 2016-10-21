@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Financial-Times/go-fthealth/v1a"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jasonlvhit/gocron"
@@ -14,6 +15,16 @@ import (
 )
 
 const resSeparator = ","
+
+var daysSchedulers = map[int]func(j *gocron.Job) *gocron.Job{
+	0: func(j *gocron.Job) *gocron.Job { return j.Sunday() },
+	1: func(j *gocron.Job) *gocron.Job { return j.Monday() },
+	2: func(j *gocron.Job) *gocron.Job { return j.Tuesday() },
+	3: func(j *gocron.Job) *gocron.Job { return j.Wednesday() },
+	4: func(j *gocron.Job) *gocron.Job { return j.Thursday() },
+	5: func(j *gocron.Job) *gocron.Job { return j.Friday() },
+	6: func(j *gocron.Job) *gocron.Job { return j.Saturday() },
+}
 
 type httpHandler struct {
 	s service
@@ -74,7 +85,7 @@ func main() {
 
 	resources := app.String(cli.StringOpt{
 		Name:   "factsetResources",
-		Value:  "/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt,/datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt",
+		Value:  "/datafeeds/symbology/sym_hub/sym_hub_v1_full:sym_coverage.txt,/datafeeds/symbology/sym_bbg/sym_bbg_v1_full:sym_bbg.txt,/datafeeds/symbology/sym_sec_entity/sym_sec_entity_v1_full:sym_sec_entity.txt,/datafeeds/entity/ent_entity_advanced/ent_entity_advanced_v1_full:ent_entity_coverage.txt",
 		Desc:   "factset resources to be loaded",
 		EnvVar: "FACTSET_RESOURCES",
 	})
@@ -137,31 +148,8 @@ func schedule(scheduler *gocron.Scheduler, time string, job func()) {
 		runningTime := timeVars[1] + ":" + timeVars[2]
 		var j *gocron.Job
 		j = scheduler.Every(1)
-		switch weekDay {
-		case 0:
-			j = j.Sunday()
-			break
-		case 1:
-			j = j.Monday()
-			break
-		case 2:
-			j = j.Tuesday()
-			break
-		case 3:
-			j = j.Wednesday()
-			break
-		case 4:
-			j = j.Thursday()
-			break
-		case 5:
-			j = j.Friday()
-			break
-		case 6:
-			j = j.Saturday()
-			break
-		default:
-			log.Errorf("Cannot parse running time [%s]", time)
-		}
+		dayOfWeekScheduler := daysSchedulers[weekDay]
+		j = dayOfWeekScheduler(j)
 		j.At(runningTime).Do(job)
 	} else {
 		scheduler.Every(1).Monday().At("12:00").Do(job)
@@ -187,8 +175,8 @@ func getResourceList(resources string) []factsetResource {
 func listen(h *httpHandler, port int) {
 	log.Infof("Listening on port: %d", port)
 	r := mux.NewRouter()
-	r.HandleFunc("/__health", h.health()).Methods("GET")
-	r.HandleFunc("/__gtg", h.gtg()).Methods("GET")
+	r.HandleFunc("/__health", v1a.Handler("Factset Reader Healthchecks", "Checks for accessing Factset server and Amazon S3 bucket", h.factsetHealthcheck(), h.amazonS3Healthcheck()))
+	r.HandleFunc("/__gtg", h.goodToGo)
 	r.HandleFunc("/force-import", h.s.forceImport).Methods("POST")
 	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
 	if err != nil {

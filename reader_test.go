@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const testFolder = "test"
@@ -18,12 +19,10 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 
 	fim := []fileInfoMock{
 		{
-			name:  "edm_premium_full_1532",
-			mtime: time.Date(2016, time.September, 6, 23, 0, 0, 0, time.UTC),
+			name: "edm_premium_full_1532.zip",
 		},
 		{
-			name:  "edm_premium_full_1547",
-			mtime: time.Date(2016, time.September, 7, 23, 0, 0, 0, time.UTC),
+			name: "edm_premium_full_1547.zip",
 		},
 	}
 
@@ -40,7 +39,7 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 		{
 			res:      "edm_premium_full",
 			files:    fis,
-			expected: "edm_premium_full_1547",
+			expected: "edm_premium_full_1547.zip",
 		},
 	}
 
@@ -49,6 +48,61 @@ func TestFactsetReader_GetLastVersion(t *testing.T) {
 		as.NoError(err)
 		as.Equal(lastVers, tc.expected)
 	}
+}
+
+func TestFactsetReader_GetLastVersion_NoMatch(t *testing.T) {
+	as := assert.New(t)
+	fsReader := FactsetReader{}
+
+	fim := []fileInfoMock{
+		{
+			name: "edm_premium_full_1547.zip",
+		},
+	}
+
+	fis := []os.FileInfo{}
+	for _, fi := range fim {
+		fis = append(fis, os.FileInfo(fi))
+	}
+
+	tcs := struct {
+		res   string
+		files []os.FileInfo
+	}{
+		res:   "sym_premium_full",
+		files: fis,
+	}
+
+	lastVers, err := fsReader.getLastVersion(tcs.files, tcs.res)
+	as.NoError(err)
+	as.Equal(lastVers, "")
+}
+
+func TestFactsetReader_GetLastVersion_ConversionError(t *testing.T) {
+	as := assert.New(t)
+	fsReader := FactsetReader{}
+
+	fim := []fileInfoMock{
+		{
+			name: "edm_premium_full_9823372036854775808.zip",
+		},
+	}
+
+	fis := []os.FileInfo{}
+	for _, fi := range fim {
+		fis = append(fis, os.FileInfo(fi))
+	}
+
+	tcs := struct {
+		res   string
+		files []os.FileInfo
+	}{
+		res:   "edm_premium_full",
+		files: fis,
+	}
+
+	_, err := fsReader.getLastVersion(tcs.files, tcs.res)
+	as.Error(err)
 }
 
 func TestFactsetReader_Unzip(t *testing.T) {
@@ -75,6 +129,44 @@ func TestFactsetReader_Unzip(t *testing.T) {
 	as.NoError(err)
 	file.Close()
 	defer as.NoError(os.Remove(fileName))
+}
+
+func TestFactsetReader_Unzip_ReaderError(t *testing.T) {
+	as := assert.New(t)
+
+	fsReader := FactsetReader{}
+
+	tc := struct {
+		archive string
+		name    string
+		dest    string
+	}{
+		archive: "sample_full_1532.zip",
+		name:    "sample_entity_map.txt",
+		dest:    testFolder,
+	}
+
+	err := fsReader.unzip(tc.archive, tc.name, tc.dest)
+	as.Error(err)
+}
+
+func TestFactsetReader_Unzip_NoMatch(t *testing.T) {
+	as := assert.New(t)
+
+	fsReader := FactsetReader{}
+
+	tc := struct {
+		archive string
+		name    string
+		dest    string
+	}{
+		archive: "edm_premium_full_1532.zip",
+		name:    "sample_map.txt",
+		dest:    testFolder,
+	}
+
+	err := fsReader.unzip(tc.archive, tc.name, tc.dest)
+	as.Nil(err)
 }
 
 func TestFactsetReader_Download(t *testing.T) {
@@ -119,24 +211,7 @@ func TestFactsetReader_ReadRes(t *testing.T) {
 	as := assert.New(t)
 
 	sftpClient := sftpClientMock{
-		readDirMock: func(dir string) ([]os.FileInfo, error) {
-			fim := []fileInfoMock{
-				{
-					name:  "edm_premium_full_1532.zip",
-					mtime: time.Date(2016, time.September, 6, 23, 0, 0, 0, time.UTC),
-				},
-				{
-					name:  "edm_premium_full_1522.zip",
-					mtime: time.Date(2016, time.September, 1, 23, 0, 0, 0, time.UTC),
-				},
-			}
-
-			fis := []os.FileInfo{}
-			for _, fi := range fim {
-				fis = append(fis, os.FileInfo(fi))
-			}
-			return fis, nil
-		},
+		readDirMock: getReadDirMock([]string{"edm_premium_full_1532.zip", "edm_premium_full_1522.zip"}),
 		downloadMock: func(fileName string, dest string) error {
 			content, err := ioutil.ReadFile(fileName)
 			if err != nil {
@@ -168,4 +243,85 @@ func TestFactsetReader_ReadRes(t *testing.T) {
 	file.Close()
 
 	defer as.NoError(os.RemoveAll(dest))
+}
+
+func TestFactsetReader_Read_ReadDirErr(t *testing.T) {
+	as := assert.New(t)
+
+	sftpClient := sftpClientMock{
+		readDirMock: func(dir string) ([]os.FileInfo, error) {
+			return nil, fmt.Errorf("Could not read directory [%s]", dir)
+		},
+		downloadMock: func(fileName string, dest string) error {
+			return nil
+		},
+	}
+
+	fsReader := FactsetReader{client: &sftpClient}
+
+	factsetRes := factsetResource{
+		archive:  "test/edm_premium_full",
+		fileName: "edm_security_entity_map.txt",
+	}
+	dest := path.Join(testFolder, dataFolder)
+	_, err := fsReader.Read(factsetRes, dest)
+	as.Error(err)
+}
+
+func TestFactsetReader_Read_DownloadError(t *testing.T) {
+	as := assert.New(t)
+
+	sftpClient := sftpClientMock{
+		readDirMock: getReadDirMock([]string{"edm_premium_full_1532.zip", "edm_premium_full_1522.zip"}),
+		downloadMock: func(fileName string, dest string) error {
+			return fmt.Errorf("Could not download file [%s] from [%s]", fileName, dest)
+		},
+	}
+
+	fsReader := FactsetReader{client: &sftpClient}
+
+	factsetRes := factsetResource{
+		archive:  "test/edm_premium_full",
+		fileName: "edm_security_entity_map.txt",
+	}
+	dest := path.Join(testFolder, dataFolder)
+	_, err := fsReader.Read(factsetRes, dest)
+	as.Error(err)
+}
+
+func TestFactsetReader_Read_GetLastVersionError(t *testing.T) {
+	as := assert.New(t)
+
+	sftpClient := sftpClientMock{
+		readDirMock: getReadDirMock([]string{"edm_premium_full_9823372036854775808.zip", "edm_premium_full_1522.zip"}),
+		downloadMock: func(fileName string, dest string) error {
+			return nil
+		},
+	}
+
+	fsReader := FactsetReader{client: &sftpClient}
+
+	factsetRes := factsetResource{
+		archive:  "test/edm_premium_full",
+		fileName: "edm_security_entity_map.txt",
+	}
+	dest := path.Join(testFolder, dataFolder)
+	_, err := fsReader.Read(factsetRes, dest)
+	as.Error(err)
+}
+
+func getReadDirMock(files []string) func(dir string) ([]os.FileInfo, error) {
+	filesInfo := []fileInfoMock{}
+	for _, file := range files {
+		filesInfo = append(filesInfo, fileInfoMock{name: file})
+	}
+	return func(dir string) ([]os.FileInfo, error) {
+		fim := filesInfo
+		fis := []os.FileInfo{}
+		for _, fi := range fim {
+			fis = append(fis, os.FileInfo(fi))
+		}
+		return fis, nil
+	}
+
 }
