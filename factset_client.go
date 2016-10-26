@@ -109,6 +109,10 @@ func (s *SFTPClient) save(file *sftp.File, dest string) error {
 }
 
 func (s *SFTPClient) Close() {
-	s.ssh.Close()
-	s.sftp.Close()
+	if s.ssh != nil {
+		s.ssh.Close()
+	}
+	if s.sftp != nil {
+		s.sftp.Close()
+	}
 }
