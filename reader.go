@@ -28,7 +28,9 @@ func NewReader(config sftpConfig) (Reader, error) {
 }
 
 func (sfr *FactsetReader) Close() {
-	sfr.client.Close()
+	if sfr.client != nil {
+		sfr.client.Close()
+	}
 }
 
 func (sfr *FactsetReader) Read(fRes factsetResource, dest string) (string, error) {

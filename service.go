@@ -84,7 +84,9 @@ func handleErrors(errors chan error) {
 
 func (s service) checkConnectivityToFactset() error {
 	reader, err := NewReader(s.rdConfig)
-	defer reader.Close()
+	if reader != nil {
+		defer reader.Close()
+	}
 	return err
 }
 
