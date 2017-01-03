@@ -8,6 +8,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"path/filepath"
+	"strings"
 )
 
 type service struct {
@@ -55,18 +57,26 @@ func (s service) fetchResource(res factsetResource) error {
 		return err
 	}
 
+	fullVersion, err := rd.GetFullVersion(fileName)
+	if err != nil {
+		return err
+	}
+	extension := filepath.Ext(res.fileName)
+	nameWithoutExt := strings.TrimSuffix(res.fileName, extension)
+	fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
+
 	defer func() {
 		os.Remove(path.Join(dataFolder, fileName))
-		os.Remove(path.Join(dataFolder, res.fileName))
+		os.Remove(path.Join(dataFolder, fileNameOnS3))
 	}()
 
-	log.Infof("Resource [%s] was succesfully read from Factset in %d", res.fileName, time.Since(start))
+	log.Infof("Resource [%s] was succesfully read from Factset in %d", fileName, time.Since(start))
 
 	wr, err := NewWriter(s.wrConfig)
 	if err != nil {
 		return err
 	}
-	err = wr.Write(dataFolder, res.fileName)
+	err = wr.Write(dataFolder, res.fileName, fileNameOnS3)
 	if err != nil {
 		return err
 	}
