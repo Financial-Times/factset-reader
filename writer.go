@@ -36,7 +36,7 @@ func (s3w *S3Writer) getS3ResFilePath(s3FileName string) string {
 		return s3FileName
 	}
 
-	resFilePath := "financial-instruments/" + time.Now().Format("2006-01-02") + "/" + s3FileName
+	resFilePath := time.Now().Format("2006-01-02") + "/" + s3FileName
 
 	return resFilePath
 }

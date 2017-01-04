@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const factsetS3BucketDirName = "financial-instruments"
+var s3TestFolderName = time.Now().Format("2006-01-02")
 
 func TestS3Writer_Gets3ResName(t *testing.T) {
 	as := assert.New(t)
@@ -19,11 +19,11 @@ func TestS3Writer_Gets3ResName(t *testing.T) {
 	}{
 		{
 			resName:  "edm_premium_full_1532.zip",
-			expected: factsetS3BucketDirName + "/" + time.Now().Format("2006-01-02") + "/edm_premium_full_1532.zip",
+			expected: s3TestFolderName + "/edm_premium_full_1532.zip",
 		},
 		{
 			resName:  "edm_premium_full_1532.zip.txt",
-			expected: factsetS3BucketDirName + "/" + time.Now().Format("2006-01-02") + "/edm_premium_full_1532.zip.txt",
+			expected:  s3TestFolderName + "/edm_premium_full_1532.zip.txt",
 		},
 	}
 
@@ -43,7 +43,7 @@ func TestS3Writer_Gets3ResName_NoExtension(t *testing.T) {
 	}{
 		{
 			resName:  "edm_premium_full_1532",
-			expected: factsetS3BucketDirName + "/" + time.Now().Format("2006-01-02") + "/edm_premium_full_1532",
+			expected:  s3TestFolderName + "/edm_premium_full_1532",
 		},
 	}
 
@@ -85,7 +85,7 @@ func TestS3Writer_Write(t *testing.T) {
 				return 0, err
 			}
 
-			err = os.MkdirAll(factsetS3BucketDirName+"/"+time.Now().Format("2006-01-02"), 0766)
+			err = os.MkdirAll(s3TestFolderName, 0766)
 			if err != nil {
 				return 0, err
 			}
@@ -116,7 +116,7 @@ func TestS3Writer_Write(t *testing.T) {
 	dbFile, err := os.Open(testFolder + "/edm_security_entity_map_test.txt")
 	as.NoError(err)
 	dbFile.Close()
-	err = os.RemoveAll(factsetS3BucketDirName)
+	err = os.RemoveAll(s3TestFolderName)
 }
 
 func TestS3Writer_Write_Error(t *testing.T) {
