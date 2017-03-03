@@ -85,7 +85,7 @@ func main() {
 
 	resources := app.String(cli.StringOpt{
 		Name:   "factsetResources",
-		Value:  "/datafeeds/symbology/sym_hub/sym_hub:sym_coverage.txt,/datafeeds/symbology/sym_bbg/sym_bbg:sym_bbg.txt,/datafeeds/symbology/sym_sec_entity/sym_sec_entity:sym_sec_entity.txt,/datafeeds/entity/ent_entity_advanced/ent_entity_advanced:ent_entity_coverage.txt",
+		Value:  "/datafeeds/symbology/sym_hub/sym_hub:sym_coverage.txt,/datafeeds/symbology/sym_bbg/sym_bbg:sym_bbg.txt,/datafeeds/symbology/sym_sec_entity/sym_sec_entity:sym_sec_entity.txt,/datafeeds/entity/ent_entity_advanced/ent_entity_advanced:ent_entity_coverage.txt,/datafeeds/reference/ref_hub/ref_hub_v2:ppl_job_function_map.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_people.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_jobs.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_job_functions.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_titles.txt",
 		Desc:   "factset resources to be loaded",
 		EnvVar: "FACTSET_RESOURCES",
 	})
