@@ -61,25 +61,33 @@ func (s service) fetchResource(res factsetResource) error {
 	if err != nil {
 		return err
 	}
-	extension := filepath.Ext(res.fileName)
-	nameWithoutExt := strings.TrimSuffix(res.fileName, extension)
-	fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
+
+	factsetFiles := strings.Split(res.fileNames, ";")
+
+	for _, factsetFile := range factsetFiles {
+		extension := filepath.Ext(factsetFile)
+		nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
+		fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
+
+		log.Infof("Resource [%s] was succesfully read from Factset in %d", fileName, time.Since(start).Minutes())
+
+		wr, err := NewWriter(s.wrConfig)
+		if err != nil {
+			return err
+		}
+		err = wr.Write(dataFolder, factsetFile, fileNameOnS3)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			os.Remove(path.Join(dataFolder, fileNameOnS3))
+		}()
+
+	}
 
 	defer func() {
 		os.Remove(path.Join(dataFolder, fileName))
-		os.Remove(path.Join(dataFolder, fileNameOnS3))
 	}()
-
-	log.Infof("Resource [%s] was succesfully read from Factset in %d", fileName, time.Since(start))
-
-	wr, err := NewWriter(s.wrConfig)
-	if err != nil {
-		return err
-	}
-	err = wr.Write(dataFolder, res.fileName, fileNameOnS3)
-	if err != nil {
-		return err
-	}
 	log.Infof("Finished writting resource [%s] to S3 in %d", res, time.Since(start))
 	return nil
 }

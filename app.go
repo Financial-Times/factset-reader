@@ -85,7 +85,7 @@ func main() {
 
 	resources := app.String(cli.StringOpt{
 		Name:   "factsetResources",
-		Value:  "/datafeeds/symbology/sym_hub/sym_hub:sym_coverage.txt,/datafeeds/symbology/sym_bbg/sym_bbg:sym_bbg.txt,/datafeeds/symbology/sym_sec_entity/sym_sec_entity:sym_sec_entity.txt,/datafeeds/entity/ent_entity_advanced/ent_entity_advanced:ent_entity_coverage.txt,/datafeeds/reference/ref_hub/ref_hub_v2:ppl_job_function_map.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_people.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_jobs.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_job_functions.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_titles.txt",
+		Value:  "/datafeeds/symbology/sym_hub/sym_hub:sym_coverage.txt,/datafeeds/symbology/sym_bbg/sym_bbg:sym_bbg.txt,/datafeeds/symbology/sym_sec_entity/sym_sec_entity:sym_sec_entity.txt,/datafeeds/entity/ent_entity_advanced/ent_entity_advanced:ent_entity_coverage.txt,/datafeeds/reference/ref_hub/ref_hub_v2:ppl_job_function_map.txt,/datafeeds/people/ppl_premium/ppl_premium_v1:ppl_people.txt;ppl_jobs.txt;ppl_job_functions.txt;ppl_titles.txt",
 		Desc:   "factset resources to be loaded",
 		EnvVar: "FACTSET_RESOURCES",
 	})
@@ -164,9 +164,20 @@ func getResourceList(resources string) []factsetResource {
 		if len(resPath) == 2 {
 			fr := factsetResource{
 				archive:  resPath[0],
-				fileName: resPath[1],
+				fileNames: resPath[1],
 			}
 			factsetRes = append(factsetRes, fr)
+
+			//files := strings.Split(resPath[1], ";")
+			//filesToRead := []string{}
+			//for _, file := range files {
+			//	filesToRead = append(filesToRead, file)
+			//}
+			//fr := factsetResource{
+			//	archive:  resPath[0],
+			//	fileNames: filesToRead,
+			//}
+			//factsetRes = append(factsetRes, fr)
 		}
 	}
 	return factsetRes

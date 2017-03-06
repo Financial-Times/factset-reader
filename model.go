@@ -4,7 +4,7 @@ const dataFolder = "data"
 
 type factsetResource struct {
 	archive  string
-	fileName string
+	fileNames string
 }
 
 type s3Config struct {
