@@ -39,6 +39,7 @@ func (s service) Fetch() {
 	}
 
 	go handleErrors(errorsCh)
+	log.Info("Finished writing files to s3")
 	wg.Wait()
 }
 
@@ -69,7 +70,7 @@ func (s service) fetchResource(res factsetResource) error {
 		nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
 		fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
 
-		log.Infof("Resource [%s] was succesfully read from Factset in %d", fileName, time.Since(start).Minutes())
+		log.Infof("Resource [%s] was succesfully read from Factset in %d", fileName, time.Since(start).String())
 
 		wr, err := NewWriter(s.wrConfig)
 		if err != nil {
@@ -88,7 +89,7 @@ func (s service) fetchResource(res factsetResource) error {
 	defer func() {
 		os.Remove(path.Join(dataFolder, fileName))
 	}()
-	log.Infof("Finished writting resource [%s] to S3 in %d", res, time.Since(start))
+	log.Infof("Finished writting resource [%s] to S3 in %d", res, time.Since(start).String())
 	return nil
 }
 

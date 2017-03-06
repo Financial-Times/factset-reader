@@ -167,17 +167,6 @@ func getResourceList(resources string) []factsetResource {
 				fileNames: resPath[1],
 			}
 			factsetRes = append(factsetRes, fr)
-
-			//files := strings.Split(resPath[1], ";")
-			//filesToRead := []string{}
-			//for _, file := range files {
-			//	filesToRead = append(filesToRead, file)
-			//}
-			//fr := factsetResource{
-			//	archive:  resPath[0],
-			//	fileNames: filesToRead,
-			//}
-			//factsetRes = append(factsetRes, fr)
 		}
 	}
 	return factsetRes
