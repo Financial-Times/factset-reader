@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"strings"
 )
 
 type Writer interface {
@@ -32,11 +33,16 @@ func (s3w *S3Writer) Write(src string, localFileName string, s3FileName string) 
 }
 
 func (s3w *S3Writer) getS3ResFilePath(s3FileName string) string {
+	var resFilePath string
 	if s3FileName == "" {
 		return s3FileName
 	}
 
-	resFilePath := time.Now().Format("2006-01-02") + "/" + s3FileName
+	if strings.Contains(s3FileName, "full") {
+		resFilePath = "Weekly/" + time.Now().Format("2006-01-02") + "/" + s3FileName
+	} else {
+		resFilePath = time.Now().Format("2006-01-02") + "/" + s3FileName
+	}
 
 	return resFilePath
 }

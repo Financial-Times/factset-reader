@@ -72,10 +72,10 @@ func (s service) fetchResource(res factsetResource) error {
 		extension := filepath.Ext(factsetFile)
 		nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
 		fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
-		fmt.Printf("FactsetFile is %s\n", factsetFile)
-		fmt.Printf("Extension is %s\n", extension)
-		fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
-		fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
+		//fmt.Printf("FactsetFile is %s\n", factsetFile)
+		//fmt.Printf("Extension is %s\n", extension)
+		//fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
+		//fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
 
 		log.Infof("Resource [%s] was succesfully read from Factset in %s", fileName, time.Since(start).String())
 
@@ -96,7 +96,7 @@ func (s service) fetchResource(res factsetResource) error {
 	defer func() {
 		os.Remove(path.Join(dataFolder, fileName))
 	}()
-	log.Infof("Finished writting resource [%s] to S3 in %s", res, time.Since(start).String())
+	log.Infof("Finished writing resource [%s] to S3 in %s", res, time.Since(start).String())
 	return nil
 }
 

@@ -103,6 +103,8 @@ func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedFileName s
 
 		majorVersion, _ := sfr.getMajorVersion(fullVersion)
 		minorVersion, _ := sfr.getMinorVersion(fullVersion)
+		fmt.Printf("Major Version is %s\n", majorVersion)
+		fmt.Printf("Minor Version is %s\n", minorVersion)
 
 		if (majorVersion > foundFile.majorVersion) ||
 			(majorVersion == foundFile.majorVersion && minorVersion > foundFile.minorVersion) {
