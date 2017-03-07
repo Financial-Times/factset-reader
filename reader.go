@@ -54,6 +54,9 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) (string, error
 	factsetFiles := strings.Split(fRes.fileNames, ";")
 	for _, factsetFile := range factsetFiles {
 		err = sfr.unzip(lastVers, factsetFile, dest)
+		if err != nil {
+			return lastVers, err
+		}
 	}
 
 	return lastVers, err
