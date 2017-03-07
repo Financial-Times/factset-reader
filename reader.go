@@ -88,10 +88,11 @@ func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedFileName s
 	}{}
 
 	for _, file := range files {
-		fmt.Printf("File is %s\n", file)
 		fmt.Printf("SearchedFileName is %s\n", searchedFileName)
 		name := file.Name()
+		fmt.Printf("FileName is %s\n", name)
 		if !strings.Contains(name, searchedFileName) {
+			fmt.Printf("Skipping %s\n", name)
 			continue
 		}
 
