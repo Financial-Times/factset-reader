@@ -152,7 +152,7 @@ func schedule(scheduler *gocron.Scheduler, time string, job func()) {
 		j = dayOfWeekScheduler(j)
 		j.At(runningTime).Do(job)
 	} else {
-		scheduler.Every(1).Monday().At("12:00").Do(job)
+		scheduler.Every(1).Day().At("04:00").Do(job)
 	}
 }
 

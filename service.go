@@ -10,6 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"path/filepath"
 	"strings"
+	"github.com/golang/go/src/pkg/fmt"
 )
 
 type service struct {
@@ -45,6 +46,8 @@ func (s service) Fetch() {
 
 func (s service) fetchResource(res factsetResource) error {
 	start := time.Now()
+	day := start.Format("Mon")
+	fmt.Printf("Day of the week is %s\n", day)
 
 	rd, err := NewReader(s.rdConfig)
 	if err != nil {
@@ -69,6 +72,10 @@ func (s service) fetchResource(res factsetResource) error {
 		extension := filepath.Ext(factsetFile)
 		nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
 		fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
+		fmt.Printf("FactsetFile is %s\n", factsetFile)
+		fmt.Printf("Extension is %s\n", extension)
+		fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
+		fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
 
 		log.Infof("Resource [%s] was succesfully read from Factset in %s", fileName, time.Since(start).String())
 

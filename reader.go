@@ -11,6 +11,7 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"strconv"
+	"github.com/golang/go/src/pkg/fmt"
 )
 
 type Reader interface {
@@ -37,12 +38,16 @@ func (sfr *FactsetReader) Close() {
 
 func (sfr *FactsetReader) Read(fRes factsetResource, dest string) (string, error) {
 	dir, res := path.Split(fRes.archive)
+	fmt.Printf("Directory is %s\n", dir)
+	fmt.Printf("Res is %s\n", res)
 	files, err := sfr.client.ReadDir(dir)
+	fmt.Printf("Files is %s\n", files)
 	if err != nil {
 		return "", err
 	}
 
 	lastVers, err := sfr.getLastVersion(files, res)
+	fmt.Printf("Last Version is %s\n", lastVers)
 	if err != nil {
 		return lastVers, err
 	}
@@ -83,6 +88,8 @@ func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedFileName s
 	}{}
 
 	for _, file := range files {
+		fmt.Printf("File is %s\n", file)
+		fmt.Printf("SearchedFileName is %s\n", searchedFileName)
 		name := file.Name()
 		if !strings.Contains(name, searchedFileName) {
 			continue
