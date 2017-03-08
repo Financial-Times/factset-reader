@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"github.com/golang/go/src/pkg/fmt"
 	"time"
+	"path/filepath"
 )
 
 type Reader interface {
@@ -149,6 +150,12 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 		_, err = io.Copy(file, rc)
 		if err != nil {
 			return err
+		}
+		if strings.Contains(archive, "full") {
+			fullFileName := f.Name
+			extension := filepath.Ext(fullFileName)
+			nameWithoutExt := strings.TrimSuffix(fullFileName, extension)
+			f.Name = nameWithoutExt + "_full" + extension
 		}
 		file.Close()
 		rc.Close()

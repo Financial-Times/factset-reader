@@ -74,6 +74,7 @@ func (s *SFTPClient) ReadDir(dir string) ([]os.FileInfo, error) {
 
 func (s SFTPClient) Download(path string, dest string) error {
 	file, err := s.sftp.Open(path)
+	file.Name()
 	if err != nil {
 		return err
 	}
