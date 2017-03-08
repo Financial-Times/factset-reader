@@ -155,7 +155,9 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 
 func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {
 	regex := regexp.MustCompile("_[0-9]+$")
-	foundMatches := regex.FindStringSubmatch(fullVersion)
+	justFileName := strings.TrimSuffix(fullVersion, ".zip")
+	fmt.Printf("Just file name is %s\n", justFileName)
+	foundMatches := regex.FindStringSubmatch(justFileName)
 	if foundMatches == nil {
 		return -1, errors.New("The minor version is missing or not correctly specified!")
 	}
