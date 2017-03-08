@@ -15,8 +15,7 @@ import (
 )
 
 type Reader interface {
-	Read(fRes factsetResource, dest string) (string, error)
-	GetFullVersion(filename string) (string, error)
+	Read(fRes factsetResource, dest string) ([]string, error)
 	Close()
 }
 
@@ -36,35 +35,40 @@ func (sfr *FactsetReader) Close() {
 	}
 }
 
-func (sfr *FactsetReader) Read(fRes factsetResource, dest string) (string, error) {
+func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]string, error) {
 	dir, res := path.Split(fRes.archive)
 	fmt.Printf("Directory is %s\n", dir)
 	fmt.Printf("Res is %s\n", res)
 	files, err := sfr.client.ReadDir(dir)
 	fmt.Printf("Files is %s\n", files)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 
-	lastVers, err := sfr.getLastVersion(files, res)
-	fmt.Printf("Last Version is %s\n", lastVers)
+	mostRecentZipFiles, err := sfr.getMostRecentZips(files, res)
 	if err != nil {
-		return lastVers, err
+		return mostRecentZipFiles, err
 	}
 
-	err = sfr.download(dir, lastVers, dest)
-	if err != nil {
-		return lastVers, err
-	}
-	factsetFiles := strings.Split(fRes.fileNames, ";")
-	for _, factsetFile := range factsetFiles {
-		err = sfr.unzip(lastVers, factsetFile, dest)
+	unzippedArchive := []string{}
+
+	for _, archive := range mostRecentZipFiles {
+		err = sfr.download(dir, archive, dest)
 		if err != nil {
-			return lastVers, err
+			return []string{}, err
 		}
+		factsetFiles := strings.Split(fRes.fileNames, ";")
+		for _, factsetFile := range factsetFiles {
+			err = sfr.unzip(archive, factsetFile, dest)
+			if err != nil {
+				return []string{}, err
+			}
+			unzippedArchive = append(unzippedArchive, archive)
+		}
+
 	}
 
-	return lastVers, err
+	return unzippedArchive, err
 }
 
 func (sfr *FactsetReader) download(filePath string, fileName string, dest string) error {
@@ -80,45 +84,43 @@ func (sfr *FactsetReader) download(filePath string, fileName string, dest string
 	return nil
 }
 
-func (sfr *FactsetReader) getLastVersion(files []os.FileInfo, searchedFileName string) (string, error) {
+func (sfr *FactsetReader) getMostRecentZips(files []os.FileInfo, searchedFileName string) ([]string, error) {
+	//TODO add errors
 	foundFile := &struct {
-		name         string
-		majorVersion int
 		minorVersion int
 	}{}
 
 	for _, file := range files {
-		fmt.Printf("SearchedFileName is %s\n", searchedFileName)
-		name := file.Name()
-		fmt.Printf("FileName is %s\n", name)
-		if !strings.Contains(name, searchedFileName) {
-			fmt.Printf("Skipping %s\n", name)
-			continue
+		fmt.Printf("File Name is %s\n", file.Name())
+		minorVersion, err := sfr.getMinorVersion(file.Name())
+		if err!= nil {
+			return []string{}, err
 		}
-
-		fullVersion, err := sfr.GetFullVersion(name)
-		if err != nil {
-			continue
-		}
-
-		majorVersion, _ := sfr.getMajorVersion(fullVersion)
-		minorVersion, _ := sfr.getMinorVersion(fullVersion)
-		fmt.Printf("Major Version is %s\n", majorVersion)
-		fmt.Printf("Minor Version is %s\n", minorVersion)
-
-		if (majorVersion > foundFile.majorVersion) ||
-			(majorVersion == foundFile.majorVersion && minorVersion > foundFile.minorVersion) {
-			foundFile.name = name
-			foundFile.majorVersion = majorVersion
+		if (minorVersion > foundFile.minorVersion) {
 			foundFile.minorVersion = minorVersion
 		}
 	}
+	fmt.Printf("Most recent version is %s\n", foundFile.minorVersion)
 
-	if len(foundFile.name) == 0 {
-		return foundFile.name, errors.New("Could not find any last version file matching filename: " + searchedFileName)
+	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
+	var mostRecentZipFiles []string
+	var minorVersion = strconv.Itoa(foundFile.minorVersion)
+	for _, file := range files {
+		name := file.Name()
+		if !strings.Contains(name, searchedFileName) {
+			fmt.Printf("File name %s does not match searched file: %s\n", name, searchedFileName)
+			continue
+		}
+		if strings.Contains(name, strconv.Itoa(foundFile.minorVersion)) {
+			fmt.Printf("File names match and version %s is different to this file %s\n", minorVersion, name)
+			mostRecentZipFiles = append(mostRecentZipFiles, name)
+		}
+		continue
 	}
-
-	return foundFile.name, nil
+	if len(mostRecentZipFiles) > 0 {
+		return mostRecentZipFiles, nil
+	}
+	return mostRecentZipFiles, errors.New("Found no matching files with name" + searchedFileName + " and version " + minorVersion)
 }
 
 func (sfr *FactsetReader) unzip(archive string, name string, dest string) error {
@@ -149,34 +151,6 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 
 	}
 	return nil
-}
-
-func (sfr *FactsetReader) GetFullVersion(filename string) (string, error) {
-	regex := regexp.MustCompile("v[0-9]+_full_[0-9]+\\.zip|txt$")
-
-	foundMatches := regex.FindStringSubmatch(filename)
-	if foundMatches == nil {
-		return "", errors.New("The full version is missing or not correctly specified! Filename was " + filename)
-	}
-	if len(foundMatches) > 1 {
-		return "", errors.New("More than 1 full version found!")
-	}
-
-	fullVersion := strings.TrimSuffix(foundMatches[0], ".zip")
-	return fullVersion, nil
-}
-
-func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
-	regex := regexp.MustCompile("^v[0-9]+")
-	foundMatches := regex.FindStringSubmatch(fullVersion)
-	if foundMatches == nil {
-		return -1, errors.New("The major version is missing or not correctly specified!")
-	}
-	if len(foundMatches) > 1 {
-		return -1, errors.New("More than 1 major version found!")
-	}
-	majorVersion, _ := strconv.Atoi(strings.TrimPrefix(foundMatches[0], "v"))
-	return majorVersion, nil
 }
 
 func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {

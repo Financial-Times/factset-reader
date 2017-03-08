@@ -10,7 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"path/filepath"
 	"strings"
-	"github.com/golang/go/src/pkg/fmt"
+	"fmt"
 )
 
 type service struct {
@@ -46,8 +46,6 @@ func (s service) Fetch() {
 
 func (s service) fetchResource(res factsetResource) error {
 	start := time.Now()
-	day := start.Format("Mon")
-	fmt.Printf("Day of the week is %s\n", day)
 
 	rd, err := NewReader(s.rdConfig)
 	if err != nil {
@@ -56,46 +54,46 @@ func (s service) fetchResource(res factsetResource) error {
 	defer rd.Close()
 
 	log.Infof("Loading resource [%s]", res)
-	fileName, err := rd.Read(res, dataFolder)
+	unzippedArchive, err := rd.Read(res, dataFolder)
 	if err != nil {
 		return err
 	}
 
-	fullVersion, err := rd.GetFullVersion(fileName)
 	if err != nil {
 		return err
 	}
 
 	factsetFiles := strings.Split(res.fileNames, ";")
+	for _, archive := range unzippedArchive {
+		justFolder := strings.TrimSuffix(archive, ".zip")
+		for _, factsetFile := range factsetFiles {
+			extension := filepath.Ext(factsetFile)
+			nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
+			fileNameOnS3 := nameWithoutExt + "_" + justFolder + extension
+			fmt.Printf("FactsetFile is %s\n", factsetFile)
+			fmt.Printf("Extension is %s\n", extension)
+			fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
+			fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
 
-	for _, factsetFile := range factsetFiles {
-		extension := filepath.Ext(factsetFile)
-		nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
-		fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
-		//fmt.Printf("FactsetFile is %s\n", factsetFile)
-		//fmt.Printf("Extension is %s\n", extension)
-		//fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
-		//fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
+			log.Infof("Resource [%s] was succesfully read from Factset in %s", factsetFile, time.Since(start).String())
 
-		log.Infof("Resource [%s] was succesfully read from Factset in %s", fileName, time.Since(start).String())
-
-		wr, err := NewWriter(s.wrConfig)
-		if err != nil {
-			return err
-		}
-		err = wr.Write(dataFolder, factsetFile, fileNameOnS3)
-		if err != nil {
-			return err
+			wr, err := NewWriter(s.wrConfig)
+			if err != nil {
+				return err
+			}
+			err = wr.Write(dataFolder, factsetFile, fileNameOnS3)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				os.Remove(path.Join(dataFolder, fileNameOnS3))
+			}()
 		}
 		defer func() {
-			os.Remove(path.Join(dataFolder, fileNameOnS3))
+			os.Remove(path.Join(dataFolder, archive))
 		}()
-
 	}
 
-	defer func() {
-		os.Remove(path.Join(dataFolder, fileName))
-	}()
 	log.Infof("Finished writing resource [%s] to S3 in %s", res, time.Since(start).String())
 	return nil
 }
