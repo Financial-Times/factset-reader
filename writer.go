@@ -41,7 +41,7 @@ func (s3w *S3Writer) getS3ResFilePath(s3FileName string) string {
 	if strings.Contains(s3FileName, "full") {
 		resFilePath = "Weekly/" + time.Now().Format("2006-01-02") + "/" + s3FileName
 	} else {
-		resFilePath = time.Now().Format("2006-01-02") + "/" + s3FileName
+		resFilePath = "Daily/" + time.Now().Format("2006-01-02") + "/" + s3FileName
 	}
 
 	return resFilePath
