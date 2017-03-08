@@ -52,7 +52,7 @@ func (s service) fetchResource(res factsetResource) error {
 	defer rd.Close()
 
 	log.Infof("Loading resource [%s]", res)
-	unzippedArchive, err := rd.Read(res, dataFolder)
+	unzippedArchive, version, err := rd.Read(res, dataFolder)
 	if err != nil {
 		return err
 	}
@@ -63,11 +63,11 @@ func (s service) fetchResource(res factsetResource) error {
 
 	factsetFiles := strings.Split(res.fileNames, ";")
 	for _, archive := range unzippedArchive {
-		justFolder := strings.TrimSuffix(archive, ".zip")
+		//justFolder := strings.TrimSuffix(archive, ".zip")
 		for _, factsetFile := range factsetFiles {
 			extension := filepath.Ext(factsetFile)
 			nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
-			fileNameOnS3 := nameWithoutExt + "_" + justFolder + extension
+			fileNameOnS3 := nameWithoutExt + "_" + version + extension
 			fmt.Printf("FactsetFile is %s\n", factsetFile)
 			fmt.Printf("Extension is %s\n", extension)
 			fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
