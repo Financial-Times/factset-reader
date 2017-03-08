@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"sync"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"path/filepath"
@@ -45,7 +44,6 @@ func (s service) Fetch() {
 }
 
 func (s service) fetchResource(res factsetResource) error {
-	start := time.Now()
 
 	rd, err := NewReader(s.rdConfig)
 	if err != nil {
@@ -75,7 +73,7 @@ func (s service) fetchResource(res factsetResource) error {
 			fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
 			fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
 
-			log.Infof("Resource [%s] was succesfully read from Factset in %s", factsetFile, time.Since(start).String())
+			log.Infof("Resource [%s] was succesfully read from Factset", factsetFile)
 
 			wr, err := NewWriter(s.wrConfig)
 			if err != nil {
@@ -94,7 +92,7 @@ func (s service) fetchResource(res factsetResource) error {
 		}()
 	}
 
-	log.Infof("Finished writing resource [%s] to S3 in %s", res, time.Since(start).String())
+	log.Infof("Finished writing resource [%s] to S3", res)
 	return nil
 }
 

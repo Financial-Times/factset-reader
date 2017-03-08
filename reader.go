@@ -12,6 +12,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"strconv"
 	"github.com/golang/go/src/pkg/fmt"
+	"time"
 )
 
 type Reader interface {
@@ -72,6 +73,7 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]string, err
 }
 
 func (sfr *FactsetReader) download(filePath string, fileName string, dest string) error {
+	start := time.Now()
 	fullName := path.Join(filePath, fileName)
 	log.Infof("Downloading file [%s]", fullName)
 
@@ -80,7 +82,7 @@ func (sfr *FactsetReader) download(filePath string, fileName string, dest string
 		return err
 	}
 
-	log.Infof("File [%s] was downloaded successfully", fullName)
+	log.Infof("File [%s] was downloaded successfully in %s", fullName, time.Since(start).String())
 	return nil
 }
 
@@ -104,7 +106,8 @@ func (sfr *FactsetReader) getMostRecentZips(files []os.FileInfo, searchedFileNam
 
 	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
 	var mostRecentZipFiles []string
-	var minorVersion = strconv.Itoa(foundFile.minorVersion)
+	//var minorVersion = strconv.Itoa(foundFile.minorVersion)
+	var minorVersion = "1220"
 	for _, file := range files {
 		name := file.Name()
 		if !strings.Contains(name, searchedFileName) {
@@ -112,7 +115,7 @@ func (sfr *FactsetReader) getMostRecentZips(files []os.FileInfo, searchedFileNam
 			continue
 		}
 		if strings.Contains(name, strconv.Itoa(foundFile.minorVersion)) {
-			fmt.Printf("File names match and version %s is different to this file %s\n", minorVersion, name)
+			fmt.Printf("File names match and version %s is the same as this file %s\n", minorVersion, name)
 			mostRecentZipFiles = append(mostRecentZipFiles, name)
 		}
 		continue
