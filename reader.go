@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"github.com/golang/go/src/pkg/fmt"
 	"time"
-	"path/filepath"
 )
 
 type Reader interface {
@@ -103,7 +102,7 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 		}
 	}
 
-	//foundFile.minorVersion = 1220
+	foundFile.minorVersion = 1220
 	fmt.Printf("Most recent version is %s\n", foundFile.minorVersion)
 
 	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
@@ -136,7 +135,7 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 	defer r.Close()
 
 	for _, f := range r.File {
-		if name != f.Name {
+		if !strings.Contains(f.Name, name) {
 			continue
 		}
 		rc, err := f.Open()
@@ -151,12 +150,12 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 		if err != nil {
 			return err
 		}
-		if strings.Contains(archive, "full") {
-			fullFileName := f.Name
-			extension := filepath.Ext(fullFileName)
-			nameWithoutExt := strings.TrimSuffix(fullFileName, extension)
-			os.Rename(file.Name(), nameWithoutExt + "_full" + extension)
-		}
+		//if strings.Contains(archive, "full") {
+		//	fullFileName := f.Name
+		//	extension := filepath.Ext(fullFileName)
+		//	nameWithoutExt := strings.TrimSuffix(fullFileName, extension)
+		//	os.Rename(file.Name(), nameWithoutExt + "_full" + extension)
+		//}
 		fmt.Printf("Archive is %s\n", archive)
 		fmt.Printf("FinalFileName is %s\n", file.Name())
 		file.Close()
