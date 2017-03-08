@@ -79,7 +79,7 @@ func (s service) fetchResource(res factsetResource) error {
 			if err != nil {
 				return err
 			}
-			err = wr.Write(dataFolder, factsetFile, fileNameOnS3)
+			err = wr.Write(dataFolder, factsetFile, fileNameOnS3, archive)
 			if err != nil {
 				return err
 			}

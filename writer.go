@@ -9,7 +9,7 @@ import (
 )
 
 type Writer interface {
-	Write(src string, localFileName string, s3FileName string) error
+	Write(src string, localFileName string, s3FileName string, archive string) error
 }
 
 type S3Writer struct {
@@ -21,8 +21,8 @@ func NewWriter(config s3Config) (Writer, error) {
 	return &S3Writer{s3Client: s3}, err
 }
 
-func (s3w *S3Writer) Write(src string, localFileName string, s3FileName string) error {
-	s3ResFilePath := s3w.getS3ResFilePath(s3FileName)
+func (s3w *S3Writer) Write(src string, localFileName string, s3FileName string, archive string) error {
+	s3ResFilePath := s3w.getS3ResFilePath(s3FileName, archive)
 	p := path.Join(src, localFileName)
 	n, err := s3w.s3Client.PutObject(s3ResFilePath, p)
 	if err != nil {
@@ -32,13 +32,13 @@ func (s3w *S3Writer) Write(src string, localFileName string, s3FileName string) 
 	return nil
 }
 
-func (s3w *S3Writer) getS3ResFilePath(s3FileName string) string {
+func (s3w *S3Writer) getS3ResFilePath(s3FileName string, archive string) string {
 	var resFilePath string
-	if s3FileName == "" {
-		return s3FileName
+	if archive == "" {
+		return archive
 	}
 
-	if strings.Contains(s3FileName, "full") {
+	if strings.Contains(archive, "full") {
 		resFilePath = "Weekly/" + time.Now().Format("2006-01-02") + "/" + s3FileName
 	} else {
 		resFilePath = "Daily/" + time.Now().Format("2006-01-02") + "/" + s3FileName

@@ -46,7 +46,7 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]string, str
 		return []string{}, "", err
 	}
 
-	mostRecentZipFiles, version, err := sfr.getMostRecentZips(files, res)
+	mostRecentZipFiles, version, err := sfr.GetMostRecentZips(files, res)
 	if err != nil {
 		return mostRecentZipFiles, version, err
 	}
@@ -86,8 +86,7 @@ func (sfr *FactsetReader) download(filePath string, fileName string, dest string
 	return nil
 }
 
-func (sfr *FactsetReader) getMostRecentZips(files []os.FileInfo, searchedFileName string) ([]string, string, error) {
-	//TODO add errors
+func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileName string) ([]string, string, error) {
 	foundFile := &struct {
 		minorVersion int
 	}{}
