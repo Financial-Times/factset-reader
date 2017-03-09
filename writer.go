@@ -5,7 +5,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"strings"
 )
 
 type Writer interface {
@@ -39,11 +38,7 @@ func (s3w *S3Writer) getS3ResFilePath(s3FileName string, archive string) string 
 		return archive
 	}
 
-	if strings.Contains(archive, "full") {
-		resFilePath = "Weekly/" + time.Now().Format("2006-01-02") + "/" + s3FileName
-	} else {
-		resFilePath = "Daily/" + time.Now().Format("2006-01-02") + "/" + s3FileName
-	}
+	resFilePath = time.Now().Format("2006-01-02") + "/" + s3FileName
 
 	return resFilePath
 }

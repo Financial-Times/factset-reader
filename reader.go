@@ -99,7 +99,7 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 		}
 	}
 
-	foundFile.minorVersion = 906
+	//foundFile.minorVersion = 906
 	fmt.Printf("Most recent version is %s\n", foundFile.minorVersion)
 
 	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
@@ -147,12 +147,6 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) ([]str
 		if err != nil {
 			return []string{}, err
 		}
-		//if strings.Contains(archive, "full") {
-		//	fullFileName := f.Name
-		//	extension := filepath.Ext(fullFileName)
-		//	nameWithoutExt := strings.TrimSuffix(fullFileName, extension)
-		//	os.Rename(file.Name(), nameWithoutExt + "_full" + extension)
-		//}
 		fmt.Printf("Archive is %s\n", archive)
 		fmt.Printf("FinalFileName is %s\n", file.Name())
 		file.Close()
