@@ -60,7 +60,8 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]string, str
 		}
 		factsetFiles := strings.Split(fRes.fileNames, ";")
 		for _, factsetFile := range factsetFiles {
-			err = sfr.unzip(archive, factsetFile, dest)
+			justFileName := strings.TrimSuffix(factsetFile, ".txt")
+			err = sfr.unzip(archive, justFileName, dest)
 			if err != nil {
 				return []string{}, version, err
 			}
@@ -108,8 +109,8 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 
 	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
 	var mostRecentZipFiles []string
-	var minorVersion = strconv.Itoa(foundFile.minorVersion)
-	//var minorVersion = "1220"
+	//var minorVersion = strconv.Itoa(foundFile.minorVersion)
+	var minorVersion = "906"
 	for _, file := range files {
 		name := file.Name()
 		if !strings.Contains(name, searchedFileName) {
@@ -141,7 +142,9 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 		}
 		//TODO
 		//FAILING HERE
+		fmt.Print("Failing here?\n")
 		rc, err := f.Open()
+		fmt.Print("Or not\n")
 		if err != nil {
 			return err
 		}
