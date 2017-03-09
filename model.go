@@ -20,3 +20,9 @@ type sftpConfig struct {
 	username string
 	key      string
 }
+
+type zipCollection struct {
+	archive 	string
+	filesToWrite 	[]string
+	version 	string
+}

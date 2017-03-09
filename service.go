@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"fmt"
+	"github.com/pkg/errors"
 )
 
 type service struct {
@@ -52,9 +53,9 @@ func (s service) fetchResource(res factsetResource) error {
 	defer rd.Close()
 
 	log.Infof("Loading resource [%s]", res)
-	archive, filesToWrite, version, err := rd.Read(res, dataFolder)
-	if err != nil {
-		return err
+	results, err := rd.Read(res, dataFolder)
+	if len(results) == 0 {
+		return errors.New("No results found")
 	}
 
 	if err != nil {
@@ -62,34 +63,36 @@ func (s service) fetchResource(res factsetResource) error {
 	}
 
 	//factsetFiles := strings.Split(res.fileNames, ";")
-	fmt.Printf("Unzipped archive is %s\n", archive)
 	//justFolder := strings.TrimSuffix(archive, ".zip")
-	for _, factsetFile := range filesToWrite {
-		extension := filepath.Ext(factsetFile)
-		nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
-		fileNameOnS3 := nameWithoutExt + "_" + version + extension
-		fmt.Printf("FactsetFile is %s\n", factsetFile)
-		fmt.Printf("Extension is %s\n", extension)
-		fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
-		fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
+	for _, result := range results {
+		for _, factsetFile := range result.filesToWrite {
+			extension := filepath.Ext(factsetFile)
+			nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
+			fileNameOnS3 := nameWithoutExt + "_" + result.version + extension
+			fmt.Printf("Archive is %s\n", result.archive)
+			fmt.Printf("FactsetFile is %s\n", factsetFile)
+			fmt.Printf("Extension is %s\n", extension)
+			fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
+			fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
 
-		log.Infof("Resource [%s] was succesfully read from Factset", factsetFile)
+			log.Infof("Resource [%s] was succesfully read from Factset", factsetFile)
 
-		wr, err := NewWriter(s.wrConfig)
-		if err != nil {
-			return err
-		}
-		err = wr.Write(dataFolder, factsetFile, fileNameOnS3, archive)
-		if err != nil {
-			return err
+			wr, err := NewWriter(s.wrConfig)
+			if err != nil {
+				return err
+			}
+			err = wr.Write(dataFolder, factsetFile, fileNameOnS3, result.archive)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				os.Remove(path.Join(dataFolder, fileNameOnS3))
+			}()
 		}
 		defer func() {
-			os.Remove(path.Join(dataFolder, fileNameOnS3))
+			os.Remove(path.Join(dataFolder, result.archive))
 		}()
 	}
-	defer func() {
-		os.Remove(path.Join(dataFolder, archive))
-	}()
 
 
 	log.Infof("Finished writing resource [%s] to S3", res)

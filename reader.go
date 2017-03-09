@@ -16,7 +16,7 @@ import (
 )
 
 type Reader interface {
-	Read(fRes factsetResource, dest string) (string, []string, string, error)
+	Read(fRes factsetResource, dest string) ([]zipCollection, error)
 	Close()
 }
 
@@ -36,40 +36,37 @@ func (sfr *FactsetReader) Close() {
 	}
 }
 
-func (sfr *FactsetReader) Read(fRes factsetResource, dest string) (string, []string, string, error) {
+func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]zipCollection, error) {
+	results := []zipCollection{}
 	dir, res := path.Split(fRes.archive)
-	fmt.Printf("Directory is %s\n", dir)
-	fmt.Printf("Res is %s\n", res)
 	files, err := sfr.client.ReadDir(dir)
-	fmt.Printf("Files is %s\n", files)
 	if err != nil {
-		return "", []string{}, "", err
+		return results, err
 	}
 
 	mostRecentZipFiles, version, err := sfr.GetMostRecentZips(files, res)
 	if err != nil {
-		return "", mostRecentZipFiles, version, err
+		return results, err
 	}
 
 	for _, archive := range mostRecentZipFiles {
 		filesToWrite := []string{}
 		err = sfr.download(dir, archive, dest)
 		if err != nil {
-			return "", []string{}, version, err
+			return results, err
 		}
 		factsetFiles := strings.Split(fRes.fileNames, ";")
 		for _, factsetFile := range factsetFiles {
 			justFileName := strings.TrimSuffix(factsetFile, ".txt")
 			filesToWrite, err = sfr.unzip(archive, justFileName, dest)
 			if err != nil {
-				return "", []string{}, version, err
+				return results, err
 			}
 		}
-		return archive, filesToWrite, version, err
-
+		results = append(results, zipCollection{archive:archive,filesToWrite:filesToWrite,version:version})
 	}
 
-	return "", []string{}, version, err
+	return results, err
 }
 
 func (sfr *FactsetReader) download(filePath string, fileName string, dest string) error {
