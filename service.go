@@ -63,6 +63,7 @@ func (s service) fetchResource(res factsetResource) error {
 
 	factsetFiles := strings.Split(res.fileNames, ";")
 	for _, archive := range unzippedArchive {
+		fmt.Printf("Unzipped archive is %s\n", archive)
 		//justFolder := strings.TrimSuffix(archive, ".zip")
 		for _, factsetFile := range factsetFiles {
 			extension := filepath.Ext(factsetFile)

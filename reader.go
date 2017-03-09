@@ -104,13 +104,12 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 		}
 	}
 
-	//foundFile.minorVersion = 1220
+	foundFile.minorVersion = 906
 	fmt.Printf("Most recent version is %s\n", foundFile.minorVersion)
 
 	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
 	var mostRecentZipFiles []string
-	//var minorVersion = strconv.Itoa(foundFile.minorVersion)
-	var minorVersion = "906"
+	var minorVersion = strconv.Itoa(foundFile.minorVersion)
 	for _, file := range files {
 		name := file.Name()
 		if !strings.Contains(name, searchedFileName) {

@@ -22,6 +22,7 @@ func NewWriter(config s3Config) (Writer, error) {
 }
 
 func (s3w *S3Writer) Write(src string, localFileName string, s3FileName string, archive string) error {
+	log.Infof("Writing file [%s]\n", s3FileName)
 	s3ResFilePath := s3w.getS3ResFilePath(s3FileName, archive)
 	p := path.Join(src, localFileName)
 	n, err := s3w.s3Client.PutObject(s3ResFilePath, p)
