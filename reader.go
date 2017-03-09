@@ -16,7 +16,7 @@ import (
 )
 
 type Reader interface {
-	Read(fRes factsetResource, dest string) ([]string, string, error)
+	Read(fRes factsetResource, dest string) (string, []string, string, error)
 	Close()
 }
 
@@ -36,41 +36,40 @@ func (sfr *FactsetReader) Close() {
 	}
 }
 
-func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]string, string, error) {
+func (sfr *FactsetReader) Read(fRes factsetResource, dest string) (string, []string, string, error) {
 	dir, res := path.Split(fRes.archive)
 	fmt.Printf("Directory is %s\n", dir)
 	fmt.Printf("Res is %s\n", res)
 	files, err := sfr.client.ReadDir(dir)
 	fmt.Printf("Files is %s\n", files)
 	if err != nil {
-		return []string{}, "", err
+		return "", []string{}, "", err
 	}
 
 	mostRecentZipFiles, version, err := sfr.GetMostRecentZips(files, res)
 	if err != nil {
-		return mostRecentZipFiles, version, err
+		return "", mostRecentZipFiles, version, err
 	}
 
-	unzippedArchive := []string{}
-
 	for _, archive := range mostRecentZipFiles {
+		filesToWrite := []string{}
 		err = sfr.download(dir, archive, dest)
 		if err != nil {
-			return []string{}, version, err
+			return "", []string{}, version, err
 		}
 		factsetFiles := strings.Split(fRes.fileNames, ";")
 		for _, factsetFile := range factsetFiles {
 			justFileName := strings.TrimSuffix(factsetFile, ".txt")
-			err = sfr.unzip(archive, justFileName, dest)
+			filesToWrite, err = sfr.unzip(archive, justFileName, dest)
 			if err != nil {
-				return []string{}, version, err
+				return "", []string{}, version, err
 			}
-			unzippedArchive = append(unzippedArchive, archive)
 		}
+		return archive, filesToWrite, version, err
 
 	}
 
-	return unzippedArchive, version, err
+	return "", []string{}, version, err
 }
 
 func (sfr *FactsetReader) download(filePath string, fileName string, dest string) error {
@@ -93,7 +92,6 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 	}{}
 
 	for _, file := range files {
-		fmt.Printf("File Name is %s\n", file.Name())
 		minorVersion, err := sfr.getMinorVersion(file.Name())
 		//majorVersion, err := sfr.getMajorVersion(file.Name())
 		if err!= nil {
@@ -128,32 +126,29 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 	return mostRecentZipFiles, minorVersion, errors.New("Found no matching files with name" + searchedFileName + " and version " + minorVersion)
 }
 
-func (sfr *FactsetReader) unzip(archive string, name string, dest string) error {
+func (sfr *FactsetReader) unzip(archive string, name string, dest string) ([]string,error) {
 	r, err := zip.OpenReader(path.Join(dest, archive))
 	if err != nil {
-		return err
+		return []string{}, err
 	}
 	defer r.Close()
+	filesToWrite := []string{}
 
 	for _, f := range r.File {
 		if !strings.Contains(f.Name, name) {
 			continue
 		}
-		//TODO
-		//FAILING HERE
-		fmt.Print("Failing here?\n")
 		rc, err := f.Open()
-		fmt.Print("Or not\n")
 		if err != nil {
-			return err
+			return []string{}, err
 		}
 		file, err := os.Create(path.Join(dest, f.Name))
 		if err != nil {
-			return err
+			return []string{}, err
 		}
 		_, err = io.Copy(file, rc)
 		if err != nil {
-			return err
+			return []string{}, err
 		}
 		//if strings.Contains(archive, "full") {
 		//	fullFileName := f.Name
@@ -165,9 +160,9 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 		fmt.Printf("FinalFileName is %s\n", file.Name())
 		file.Close()
 		rc.Close()
-
+		filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), "data/"))
 	}
-	return nil
+	return filesToWrite, nil
 }
 
 func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
@@ -186,7 +181,6 @@ func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
 func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {
 	regex := regexp.MustCompile("_[0-9]+$")
 	justFileName := strings.TrimSuffix(fullVersion, ".zip")
-	fmt.Printf("Just file name is %s\n", justFileName)
 	foundMatches := regex.FindStringSubmatch(justFileName)
 	if foundMatches == nil {
 		return -1, errors.New("The minor version is missing or not correctly specified!")
