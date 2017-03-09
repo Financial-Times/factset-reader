@@ -94,6 +94,7 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 	for _, file := range files {
 		fmt.Printf("File Name is %s\n", file.Name())
 		minorVersion, err := sfr.getMinorVersion(file.Name())
+		//majorVersion, err := sfr.getMajorVersion(file.Name())
 		if err!= nil {
 			return []string{}, "", err
 		}
@@ -102,7 +103,7 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 		}
 	}
 
-	foundFile.minorVersion = 1220
+	//foundFile.minorVersion = 1220
 	fmt.Printf("Most recent version is %s\n", foundFile.minorVersion)
 
 	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
@@ -138,6 +139,8 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 		if !strings.Contains(f.Name, name) {
 			continue
 		}
+		//TODO
+		//FAILING HERE
 		rc, err := f.Open()
 		if err != nil {
 			return err
@@ -163,6 +166,19 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) error 
 
 	}
 	return nil
+}
+
+func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
+	regex := regexp.MustCompile("^v[0-9]+")
+	foundMatches := regex.FindStringSubmatch(fullVersion)
+	if foundMatches == nil {
+		return -1, errors.New("The major version is missing or not correctly specified!")
+	}
+	if len(foundMatches) > 1 {
+		return -1, errors.New("More than 1 major version found!")
+	}
+	majorVersion, _ := strconv.Atoi(strings.TrimPrefix(foundMatches[0], "v"))
+	return majorVersion, nil
 }
 
 func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {
