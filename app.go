@@ -120,10 +120,6 @@ func main() {
 
 		log.Printf("Resource list: %v", s.files)
 		go func() {
-			if *resources == "" {
-				log.Infof("Resource list not set; skipping run")
-				return 
-			}
 			sch := gocron.NewScheduler()
 			schedule(sch, *runningTime, func() {
 				s.Fetch()
