@@ -24,5 +24,4 @@ type sftpConfig struct {
 type zipCollection struct {
 	archive 	string
 	filesToWrite 	[]string
-	version 	string
 }

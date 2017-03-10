@@ -11,7 +11,6 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"strconv"
-	"github.com/golang/go/src/pkg/fmt"
 	"time"
 )
 
@@ -44,7 +43,7 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]zipCollecti
 		return results, err
 	}
 
-	mostRecentZipFiles, version, err := sfr.GetMostRecentZips(files, res)
+	mostRecentZipFiles, err := sfr.GetMostRecentZips(files, res)
 	if err != nil {
 		return results, err
 	}
@@ -56,14 +55,12 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]zipCollecti
 			return results, err
 		}
 		factsetFiles := strings.Split(fRes.fileNames, ";")
-		for _, factsetFile := range factsetFiles {
-			justFileName := strings.TrimSuffix(factsetFile, ".txt")
-			filesToWrite, err = sfr.unzip(archive, justFileName, dest)
-			if err != nil {
-				return results, err
-			}
+		filesToWrite, err = sfr.unzip(archive, factsetFiles, dest)
+		if err != nil {
+			return results, err
 		}
-		results = append(results, zipCollection{archive:archive,filesToWrite:filesToWrite,version:version})
+
+		results = append(results, zipCollection{archive:archive,filesToWrite:filesToWrite})
 	}
 
 	return results, err
@@ -83,47 +80,50 @@ func (sfr *FactsetReader) download(filePath string, fileName string, dest string
 	return nil
 }
 
-func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileName string) ([]string, string, error) {
+func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileName string) ([]string, error) {
 	foundFile := &struct {
+		name         string
+		majorVersion int
 		minorVersion int
 	}{}
 
 	for _, file := range files {
 		minorVersion, err := sfr.getMinorVersion(file.Name())
-		//majorVersion, err := sfr.getMajorVersion(file.Name())
 		if err!= nil {
-			return []string{}, "", err
+			return []string{}, err
 		}
-		if (minorVersion > foundFile.minorVersion) {
+		majorVersion, err := sfr.getMajorVersion(file.Name())
+		if err!= nil {
+			return []string{}, err
+		}
+		if (majorVersion > majorVersion) ||
+			(majorVersion == majorVersion && minorVersion > foundFile.minorVersion) {
+			foundFile.name = file.Name()
+			foundFile.majorVersion = majorVersion
 			foundFile.minorVersion = minorVersion
 		}
 	}
 
-	//foundFile.minorVersion = 906
-	fmt.Printf("Most recent version is %s\n", foundFile.minorVersion)
-
-	fmt.Printf("SearchedFileName is %s\n", searchedFileName)
 	var mostRecentZipFiles []string
 	var minorVersion = strconv.Itoa(foundFile.minorVersion)
+	var majorVersion = strconv.Itoa(foundFile.majorVersion)
 	for _, file := range files {
 		name := file.Name()
 		if !strings.Contains(name, searchedFileName) {
-			fmt.Printf("File name %s does not match searched file: %s\n", name, searchedFileName)
 			continue
 		}
-		if strings.Contains(name, strconv.Itoa(foundFile.minorVersion)) {
-			fmt.Printf("File names match and version %s is the same as this file %s\n", minorVersion, name)
+		if strings.Contains(name, strconv.Itoa(foundFile.minorVersion)) && strings.Contains(name, strconv.Itoa(foundFile.majorVersion)) {
 			mostRecentZipFiles = append(mostRecentZipFiles, name)
 		}
 		continue
 	}
 	if len(mostRecentZipFiles) > 0 {
-		return mostRecentZipFiles, minorVersion, nil
+		return mostRecentZipFiles, nil
 	}
-	return mostRecentZipFiles, minorVersion, errors.New("Found no matching files with name" + searchedFileName + " and version " + minorVersion)
+	return mostRecentZipFiles, errors.New("Found no matching files with name: " + searchedFileName + ", major version: " + majorVersion + ", or minor version: " + minorVersion)
 }
 
-func (sfr *FactsetReader) unzip(archive string, name string, dest string) ([]string,error) {
+func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest string) ([]string,error) {
 	r, err := zip.OpenReader(path.Join(dest, archive))
 	if err != nil {
 		return []string{}, err
@@ -132,26 +132,27 @@ func (sfr *FactsetReader) unzip(archive string, name string, dest string) ([]str
 	filesToWrite := []string{}
 
 	for _, f := range r.File {
-		if !strings.Contains(f.Name, name) {
-			continue
+		for _, factsetFile := range factsetFiles {
+			justFileName := strings.TrimSuffix(factsetFile, ".txt")
+			if !strings.Contains(f.Name, justFileName) {
+				continue
+			}
+			rc, err := f.Open()
+			if err != nil {
+				return []string{}, err
+			}
+			file, err := os.Create(path.Join(dest, f.Name))
+			if err != nil {
+				return []string{}, err
+			}
+			_, err = io.Copy(file, rc)
+			if err != nil {
+				return []string{}, err
+			}
+			file.Close()
+			rc.Close()
+			filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), "data/"))
 		}
-		rc, err := f.Open()
-		if err != nil {
-			return []string{}, err
-		}
-		file, err := os.Create(path.Join(dest, f.Name))
-		if err != nil {
-			return []string{}, err
-		}
-		_, err = io.Copy(file, rc)
-		if err != nil {
-			return []string{}, err
-		}
-		fmt.Printf("Archive is %s\n", archive)
-		fmt.Printf("FinalFileName is %s\n", file.Name())
-		file.Close()
-		rc.Close()
-		filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), "data/"))
 	}
 	return filesToWrite, nil
 }

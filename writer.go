@@ -8,7 +8,7 @@ import (
 )
 
 type Writer interface {
-	Write(src string, localFileName string, s3FileName string, archive string) error
+	Write(src string, fileName string, archive string) error
 }
 
 type S3Writer struct {
@@ -20,10 +20,10 @@ func NewWriter(config s3Config) (Writer, error) {
 	return &S3Writer{s3Client: s3}, err
 }
 
-func (s3w *S3Writer) Write(src string, localFileName string, s3FileName string, archive string) error {
-	log.Infof("Writing file [%s]\n", s3FileName)
-	s3ResFilePath := s3w.getS3ResFilePath(s3FileName, archive)
-	p := path.Join(src, localFileName)
+func (s3w *S3Writer) Write(src string, fileName string, archive string) error {
+	log.Infof("Writing file [%s]\n", fileName)
+	s3ResFilePath := s3w.getS3ResFilePath(fileName, archive)
+	p := path.Join(src, fileName)
 	n, err := s3w.s3Client.PutObject(s3ResFilePath, p)
 	if err != nil {
 		return err

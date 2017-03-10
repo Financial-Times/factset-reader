@@ -7,10 +7,8 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
-	"path/filepath"
-	"strings"
-	"fmt"
 	"github.com/pkg/errors"
+	"github.com/golang/go/src/pkg/fmt"
 )
 
 type service struct {
@@ -40,7 +38,6 @@ func (s service) Fetch() {
 	}
 
 	go handleErrors(errorsCh)
-	log.Info("Finished writing files to s3")
 	wg.Wait()
 }
 
@@ -63,18 +60,8 @@ func (s service) fetchResource(res factsetResource) error {
 		return err
 	}
 
-	//factsetFiles := strings.Split(res.fileNames, ";")
-	//justFolder := strings.TrimSuffix(archive, ".zip")
 	for _, result := range results {
 		for _, factsetFile := range result.filesToWrite {
-			extension := filepath.Ext(factsetFile)
-			nameWithoutExt := strings.TrimSuffix(factsetFile, extension)
-			fileNameOnS3 := nameWithoutExt + "_" + result.version + extension
-			fmt.Printf("Archive is %s\n", result.archive)
-			fmt.Printf("FactsetFile is %s\n", factsetFile)
-			fmt.Printf("Extension is %s\n", extension)
-			fmt.Printf("NameWithoutExt is %s\n", nameWithoutExt)
-			fmt.Printf("FileNameOnS3 is %s\n", fileNameOnS3)
 
 			log.Infof("Resource [%s] was succesfully read from Factset", factsetFile)
 
@@ -82,21 +69,22 @@ func (s service) fetchResource(res factsetResource) error {
 			if err != nil {
 				return err
 			}
-			err = wr.Write(dataFolder, factsetFile, fileNameOnS3, result.archive)
+			err = wr.Write(dataFolder, factsetFile, result.archive)
 			if err != nil {
 				return err
 			}
 			defer func() {
-				os.Remove(path.Join(dataFolder, fileNameOnS3))
+				fmt.Printf("Deleting %s from local directory\n", factsetFile)
+				os.Remove(path.Join(dataFolder, factsetFile))
 			}()
 		}
 		defer func() {
+			fmt.Printf("Deleting %s from local directory\n", result.archive)
 			os.Remove(path.Join(dataFolder, result.archive))
 		}()
 	}
 
 
-	log.Infof("Finished writing resource [%s] to S3", res)
 	return nil
 }
 
