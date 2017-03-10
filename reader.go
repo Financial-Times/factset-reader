@@ -12,6 +12,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"strconv"
 	"time"
+	"github.com/golang/go/src/pkg/fmt"
 )
 
 type Reader interface {
@@ -49,12 +50,14 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]zipCollecti
 	}
 
 	for _, archive := range mostRecentZipFiles {
+		fmt.Printf("Archive is %s\n", archive)
 		filesToWrite := []string{}
 		err = sfr.download(dir, archive, dest)
 		if err != nil {
 			return results, err
 		}
 		factsetFiles := strings.Split(fRes.fileNames, ";")
+		fmt.Printf("Files to write are %s\n", factsetFiles)
 		filesToWrite, err = sfr.unzip(archive, factsetFiles, dest)
 		if err != nil {
 			return results, err
@@ -134,6 +137,8 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 	for _, f := range r.File {
 		for _, factsetFile := range factsetFiles {
 			justFileName := strings.TrimSuffix(factsetFile, ".txt")
+			fmt.Printf("Just file name %s\n", justFileName)
+			fmt.Printf("File in archive is %s\n", f.Name)
 			if !strings.Contains(f.Name, justFileName) {
 				continue
 			}
