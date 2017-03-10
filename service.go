@@ -52,12 +52,12 @@ func (s service) fetchResource(res factsetResource) error {
 	log.Infof("Loading resource [%s]", res)
 
 	results, err := rd.Read(res, dataFolder)
-	if len(results) == 0 {
-		return errors.New("No results found")
-	}
 
 	if err != nil {
 		return err
+	}
+	if len(results) == 0 {
+		return errors.New("No results found")
 	}
 
 	for _, result := range results {

@@ -166,7 +166,7 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 }
 
 func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
-	regex := regexp.MustCompile("^v[0-9]+")
+	regex := regexp.MustCompile("^*v[0-9]+")
 	justFileName := strings.TrimSuffix(fullVersion, ".zip")
 	fmt.Printf("Just file name %s\n", justFileName)
 	foundMatches := regex.FindStringSubmatch(justFileName)
