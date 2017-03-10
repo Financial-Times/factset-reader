@@ -23,7 +23,7 @@ func (s service) forceImport(rw http.ResponseWriter, req *http.Request) {
 
 func (s service) Fetch() {
 	if len([]factsetResource{}) == 0 {
-		log.Warnf("Resource list not set; skipping run")
+		log.Warnf("Resource list not set, skipping run")
 		return
 	}
 	res := s.files
