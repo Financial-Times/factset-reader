@@ -167,7 +167,9 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 
 func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
 	regex := regexp.MustCompile("^v[0-9]+")
-	foundMatches := regex.FindStringSubmatch(fullVersion)
+	justFileName := strings.TrimSuffix(fullVersion, ".zip")
+	fmt.Printf("Just file name %s\n", justFileName)
+	foundMatches := regex.FindStringSubmatch(justFileName)
 	if foundMatches == nil {
 		return -1, errors.New("The major version is missing or not correctly specified!")
 	}
@@ -175,12 +177,14 @@ func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
 		return -1, errors.New("More than 1 major version found!")
 	}
 	majorVersion, _ := strconv.Atoi(strings.TrimPrefix(foundMatches[0], "v"))
+	fmt.Printf("Major Version: %s\n", majorVersion)
 	return majorVersion, nil
 }
 
 func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {
 	regex := regexp.MustCompile("_[0-9]+$")
 	justFileName := strings.TrimSuffix(fullVersion, ".zip")
+	fmt.Printf("Just file name %s\n", justFileName)
 	foundMatches := regex.FindStringSubmatch(justFileName)
 	if foundMatches == nil {
 		return -1, errors.New("The minor version is missing or not correctly specified!")
@@ -189,5 +193,6 @@ func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {
 		return -1, errors.New("More than 1 minor version found!")
 	}
 	minorVersion, _ := strconv.Atoi(strings.TrimPrefix(foundMatches[0], "_"))
+	fmt.Printf("Minor Version: %s\n", minorVersion)
 	return minorVersion, nil
 }
