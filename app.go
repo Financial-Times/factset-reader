@@ -120,7 +120,7 @@ func main() {
 
 		log.Printf("Resource list: %v", s.files)
 		go func() {
-			if resources == "" {
+			if *resources == "" {
 				log.Infof("Resource list not set; skipping run")
 				return 
 			}
