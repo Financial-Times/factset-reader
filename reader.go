@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 	"github.com/golang/go/src/pkg/fmt"
+	"github.com/golang/go/src/pkg/go/build/testdata/other/file"
 )
 
 type Reader interface {
@@ -91,16 +92,16 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 	}{}
 
 	for _, file := range files {
-		minorVersion, err := sfr.getMinorVersion(file.Name())
-		if err!= nil {
-			return []string{}, err
-		}
+		fmt.Printf("File is %s\n", file.Name())
 		majorVersion, err := sfr.getMajorVersion(file.Name())
 		if err!= nil {
 			return []string{}, err
 		}
-		if (majorVersion > majorVersion) ||
-			(majorVersion == majorVersion && minorVersion > foundFile.minorVersion) {
+		minorVersion, err := sfr.getMinorVersion(file.Name())
+		if err!= nil {
+			return []string{}, err
+		}
+		if (majorVersion > majorVersion) || (majorVersion == majorVersion && minorVersion > foundFile.minorVersion) {
 			foundFile.name = file.Name()
 			foundFile.majorVersion = majorVersion
 			foundFile.minorVersion = minorVersion
@@ -110,6 +111,9 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 	var mostRecentZipFiles []string
 	var minorVersion = strconv.Itoa(foundFile.minorVersion)
 	var majorVersion = strconv.Itoa(foundFile.majorVersion)
+	fmt.Printf("Final minor version is %s\n", minorVersion)
+	fmt.Printf("Final major version is %s\n", majorVersion)
+
 	for _, file := range files {
 		name := file.Name()
 		if !strings.Contains(name, searchedFileName) {
