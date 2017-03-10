@@ -12,7 +12,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"strconv"
 	"time"
-	"github.com/golang/go/src/pkg/fmt"
 )
 
 type Reader interface {
@@ -50,14 +49,12 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string) ([]zipCollecti
 	}
 
 	for _, archive := range mostRecentZipFiles {
-		fmt.Printf("Archive is %s\n", archive)
 		filesToWrite := []string{}
 		err = sfr.download(dir, archive, dest)
 		if err != nil {
 			return results, err
 		}
 		factsetFiles := strings.Split(fRes.fileNames, ";")
-		fmt.Printf("Files to write are %s\n", factsetFiles)
 		filesToWrite, err = sfr.unzip(archive, factsetFiles, dest)
 		if err != nil {
 			return results, err
@@ -91,7 +88,6 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 	}{}
 
 	for _, file := range files {
-		fmt.Printf("File is %s\n", file.Name())
 		majorVersion, err := sfr.getMajorVersion(file.Name())
 		if err!= nil {
 			return []string{}, err
@@ -110,8 +106,6 @@ func (sfr *FactsetReader) GetMostRecentZips(files []os.FileInfo, searchedFileNam
 	var mostRecentZipFiles []string
 	var minorVersion = strconv.Itoa(foundFile.minorVersion)
 	var majorVersion = strconv.Itoa(foundFile.majorVersion)
-	fmt.Printf("Final minor version is %s\n", minorVersion)
-	fmt.Printf("Final major version is %s\n", majorVersion)
 
 	for _, file := range files {
 		name := file.Name()
@@ -140,8 +134,6 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 	for _, f := range r.File {
 		for _, factsetFile := range factsetFiles {
 			justFileName := strings.TrimSuffix(factsetFile, ".txt")
-			fmt.Printf("Just file name %s\n", justFileName)
-			fmt.Printf("File in archive is %s\n", f.Name)
 			if !strings.Contains(f.Name, justFileName) {
 				continue
 			}
@@ -168,7 +160,6 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
 	regex := regexp.MustCompile("^*v[0-9]+")
 	justFileName := strings.TrimSuffix(fullVersion, ".zip")
-	fmt.Printf("Just file name %s\n", justFileName)
 	foundMatches := regex.FindStringSubmatch(justFileName)
 	if foundMatches == nil {
 		return -1, errors.New("The major version is missing or not correctly specified!")
@@ -177,14 +168,12 @@ func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
 		return -1, errors.New("More than 1 major version found!")
 	}
 	majorVersion, _ := strconv.Atoi(strings.TrimPrefix(foundMatches[0], "v"))
-	fmt.Printf("Major Version: %s\n", majorVersion)
 	return majorVersion, nil
 }
 
 func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {
 	regex := regexp.MustCompile("_[0-9]+$")
 	justFileName := strings.TrimSuffix(fullVersion, ".zip")
-	fmt.Printf("Just file name %s\n", justFileName)
 	foundMatches := regex.FindStringSubmatch(justFileName)
 	if foundMatches == nil {
 		return -1, errors.New("The minor version is missing or not correctly specified!")
@@ -193,6 +182,5 @@ func (sfr *FactsetReader) getMinorVersion(fullVersion string) (int, error) {
 		return -1, errors.New("More than 1 minor version found!")
 	}
 	minorVersion, _ := strconv.Atoi(strings.TrimPrefix(foundMatches[0], "_"))
-	fmt.Printf("Minor Version: %s\n", minorVersion)
 	return minorVersion, nil
 }

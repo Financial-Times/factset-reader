@@ -8,7 +8,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/pkg/errors"
-	"github.com/golang/go/src/pkg/fmt"
 )
 
 type service struct {
@@ -49,8 +48,6 @@ func (s service) fetchResource(res factsetResource) error {
 	}
 	defer rd.Close()
 
-	log.Infof("Loading resource [%s]", res)
-
 	results, err := rd.Read(res, dataFolder)
 
 	if err != nil {
@@ -62,9 +59,6 @@ func (s service) fetchResource(res factsetResource) error {
 
 	for _, result := range results {
 		for _, factsetFile := range result.filesToWrite {
-
-			log.Infof("Resource [%s] was succesfully read from Factset", factsetFile)
-
 			wr, err := NewWriter(s.wrConfig)
 			if err != nil {
 				return err
@@ -73,15 +67,18 @@ func (s service) fetchResource(res factsetResource) error {
 			if err != nil {
 				return err
 			}
+		}
+		defer func() {
+			os.Remove(path.Join(dataFolder, result.archive))
+		}()
+	}
+
+	for _, result := range results {
+		for _, factsetFile := range result.filesToWrite {
 			defer func() {
-				fmt.Printf("Deleting %s from local directory\n", factsetFile)
 				os.Remove(path.Join(dataFolder, factsetFile))
 			}()
 		}
-		defer func() {
-			fmt.Printf("Deleting %s from local directory\n", result.archive)
-			os.Remove(path.Join(dataFolder, result.archive))
-		}()
 	}
 
 
