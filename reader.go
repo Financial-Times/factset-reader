@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 	"github.com/golang/go/src/pkg/fmt"
-	"github.com/golang/go/src/pkg/go/build/testdata/other/file"
 )
 
 type Reader interface {
