@@ -75,12 +75,10 @@ func (s service) fetchResource(res factsetResource) error {
 
 	for _, result := range results {
 		for _, factsetFile := range result.filesToWrite {
-			defer func() {
-				os.Remove(path.Join(dataFolder, factsetFile))
-			}()
+			os.Remove(path.Join(dataFolder, factsetFile))
+
 		}
 	}
-
 
 	return nil
 }

@@ -3,7 +3,7 @@ package main
 const dataFolder = "data"
 
 type factsetResource struct {
-	archive  string
+	archive   string
 	fileNames string
 }
 
@@ -22,6 +22,6 @@ type sftpConfig struct {
 }
 
 type zipCollection struct {
-	archive 	string
-	filesToWrite 	[]string
+	archive      string
+	filesToWrite []string
 }

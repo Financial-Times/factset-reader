@@ -163,7 +163,7 @@ func getResourceList(resources string) []factsetResource {
 		resPath := strings.Split(fulRes, ":")
 		if len(resPath) == 2 {
 			fr := factsetResource{
-				archive:  resPath[0],
+				archive:   resPath[0],
 				fileNames: resPath[1],
 			}
 			factsetRes = append(factsetRes, fr)

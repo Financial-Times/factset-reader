@@ -21,7 +21,7 @@ func NewWriter(config s3Config) (Writer, error) {
 }
 
 func (s3w *S3Writer) Write(src string, fileName string, archive string) error {
-	log.Infof("Writing file [%s]\n", fileName)
+	log.Infof("Writing file [%s]", fileName)
 	s3ResFilePath := s3w.getS3ResFilePath(fileName, archive)
 	p := path.Join(src, fileName)
 	n, err := s3w.s3Client.PutObject(s3ResFilePath, p)
@@ -32,13 +32,13 @@ func (s3w *S3Writer) Write(src string, fileName string, archive string) error {
 	return nil
 }
 
-func (s3w *S3Writer) getS3ResFilePath(s3FileName string, archive string) string {
+func (s3w *S3Writer) getS3ResFilePath(fileName string, archive string) string {
 	var resFilePath string
 	if archive == "" {
 		return archive
 	}
 
-	resFilePath = time.Now().Format("2006-01-02") + "/" + s3FileName
+	resFilePath = time.Now().Format("2006-01-02") + "/" + fileName
 
 	return resFilePath
 }
