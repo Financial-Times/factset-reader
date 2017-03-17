@@ -101,9 +101,6 @@ func main() {
 		}
 
 		log.Printf("Resource list: %v", s.files)
-		go func() {
-			s.fetchResources(s.files)
-		}()
 
 		httpHandler := &httpHandler{s: s}
 		listen(httpHandler, *port)
