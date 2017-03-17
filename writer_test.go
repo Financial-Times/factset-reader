@@ -3,77 +3,13 @@ package main
 import (
 	"errors"
 	"github.com/stretchr/testify/assert"
+	"testing"
 	"io/ioutil"
 	"os"
-	"testing"
 	"time"
 )
 
 var s3TestFolderName = time.Now().Format("2006-01-02")
-
-func TestS3Writer_Gets3ResName(t *testing.T) {
-	as := assert.New(t)
-	tcs := []struct {
-		resName  string
-		expected string
-	}{
-		{
-			resName:  "edm_premium_full_1532.zip",
-			expected: s3TestFolderName + "/edm_premium_full_1532.zip",
-		},
-		{
-			resName:  "edm_premium_full_1532.zip.txt",
-			expected:  s3TestFolderName + "/edm_premium_full_1532.zip.txt",
-		},
-	}
-
-	wr := S3Writer{}
-
-	for _, tc := range tcs {
-		r := wr.getS3ResFilePath(tc.resName)
-		as.Equal(r, tc.expected)
-	}
-}
-
-func TestS3Writer_Gets3ResName_NoExtension(t *testing.T) {
-	as := assert.New(t)
-	tcs := []struct {
-		resName  string
-		expected string
-	}{
-		{
-			resName:  "edm_premium_full_1532",
-			expected:  s3TestFolderName + "/edm_premium_full_1532",
-		},
-	}
-
-	wr := S3Writer{}
-
-	for _, tc := range tcs {
-		r := wr.getS3ResFilePath(tc.resName)
-		as.Equal(r, tc.expected)
-	}
-}
-
-func TestS3Writer_Gets3ResName_EmptyFilename(t *testing.T) {
-	as := assert.New(t)
-	tcs := []struct {
-		resName  string
-		expected string
-	}{
-		{
-			resName:  "",
-			expected: "",
-		},
-	}
-
-	wr := S3Writer{}
-
-	for _, tc := range tcs {
-		r := wr.getS3ResFilePath(tc.resName)
-		as.Equal(r, tc.expected)
-	}
-}
 
 func TestS3Writer_Write(t *testing.T) {
 	as := assert.New(t)
@@ -110,7 +46,7 @@ func TestS3Writer_Write(t *testing.T) {
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
-	err := wr.Write(testFolder, "edm_security_entity_map_test.txt", "edm_security_entity_map_test_v1_full_2145.txt")
+	err := wr.Write(testFolder, "daily.zip")
 	as.NoError(err)
 
 	dbFile, err := os.Open(testFolder + "/edm_security_entity_map_test.txt")
@@ -131,7 +67,7 @@ func TestS3Writer_Write_Error(t *testing.T) {
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
-	err := wr.Write(testFolder, "edm_security_entity_map_test.txt", "edm_security_entity_map_test_v1_full_2115.txt")
+	err := wr.Write(testFolder, "daily.zip")
 	as.NotNil(err)
 	as.Error(err)
 }

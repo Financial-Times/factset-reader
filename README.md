@@ -2,7 +2,8 @@
 
 [![Circle CI](https://circleci.com/gh/Financial-Times/factset-reader/tree/master.png?style=shield)](https://circleci.com/gh/Financial-Times/factset-reader/tree/master)
 
-__A service for reading files from Factset FTP (SFTP) server and writing them into an Amazon S3 bucket.__
+__A service for reading files from Factset FTP (SFTP) server and writing them into an Amazon S3 bucket__
+
 # Installation
 
 For the first time:
@@ -26,17 +27,16 @@ $GOPATH/bin/factset-reader
 --factsetKey=xxx
 --factsetFTP=fts-sftp.factset.com
 --factsetPort=6671
---resources=/datafeeds/edm/edm_premium/edm_premium_full:edm_security_entity_map.txt,/datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt
---runningTime="1 12 00"
+--resources=/directory/without/version:fileToDownload1.txt;fileToDownload2.txt
 ```
 
-The awsAccessKey, awsSecretKey, bucketName, factsetUser, factsetKey arguments are mandatory, and represent authentication credentials for S3 and Factset FTP server. The other arguments are optional and they will default at reading the edm_security_entity_map.txt and edm_bbg_ids.txt files from Factset and writting them to S3, every Monday at 12:00 PM.
+The awsAccessKey, awsSecretKey, bucketName, factsetUser, factsetKey arguments are mandatory, and represent authentication credentials for S3 and Factset FTP server. 
 
-The resources argument specifies a comma separated list of files to be downloaded from Factset FTP server. Because every file is inside an archive, the service will first download the archive, unzip the file and write it to S3 bucket. A resource has the format archive_path:file, example: /datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full:edm_bbg_ids.txt, where  /datafeeds/edm/edm_bbg_ids/edm_bbg_ids_v1_full is the path of the archive without version and edm_bbg_ids.txt is the file to be extracted from this archive. On the Factset FTP server the archive name will contain also the data version, but it is enough for this service to provide the archive name without the version and it will download the latest one.
+The resources argument specifies a comma separated list of archives and files within that archive to be downloaded from Factset FTP server. Because every file is inside an archive, the service will first download the archive, unzip the files you specify, zip a collection of daily/weekly files and upload the resulting zips to s3. A resource has the format archive_path:file1.txt;file2.txt, example: /datafeeds/edm/edm_bbg_ids/edm_bbg_ids:edm_bbg_ids.txt, where  /datafeeds/edm/edm_bbg_ids/ is the path of the archive, edm_bbg_ids is the prefix of the zip without versions and edm_bbg_ids.txt is the file to be extracted from this archive. On the Factset FTP server the archive name will contain also the data version, but it is enough for this service to provide the archive name without the version and it will download the latest one.
 
-The runningTime argument specifies when the job should run. It has the format "day_of_week hour minute". Example: "1 12 OO" will run on every Monday at 12:00 PM. The day_of_week parameter takes values from 0 to 6, corresponding to Sunday-Saturday.
+After downloading the zip files from Factset FTP server, the service will write them to the specified Amamzon S3 bucket. The zip files written to S3 will be inside of a folder named by the current date. Depending upon the day there may be both a weekly.zip and daily.zip or just a daily.zip
 
-After downloading the files from Factset FTP server, the service will write them to the specified Amamzon S3 bucket. The file written to S3 will have as name the original name of the file appended with the current date.
+
 
 # Endpoints
 

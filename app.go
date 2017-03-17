@@ -10,21 +10,10 @@ import (
 	"github.com/Financial-Times/go-fthealth/v1a"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"github.com/jasonlvhit/gocron"
 	"github.com/jawher/mow.cli"
 )
 
 const resSeparator = ","
-
-var daysSchedulers = map[int]func(j *gocron.Job) *gocron.Job{
-	0: func(j *gocron.Job) *gocron.Job { return j.Sunday() },
-	1: func(j *gocron.Job) *gocron.Job { return j.Monday() },
-	2: func(j *gocron.Job) *gocron.Job { return j.Tuesday() },
-	3: func(j *gocron.Job) *gocron.Job { return j.Wednesday() },
-	4: func(j *gocron.Job) *gocron.Job { return j.Thursday() },
-	5: func(j *gocron.Job) *gocron.Job { return j.Friday() },
-	6: func(j *gocron.Job) *gocron.Job { return j.Saturday() },
-}
 
 type httpHandler struct {
 	s service
@@ -85,16 +74,9 @@ func main() {
 
 	resources := app.String(cli.StringOpt{
 		Name:   "factsetResources",
-		Value:  "/datafeeds/symbology/sym_hub/sym_hub:sym_coverage.txt,/datafeeds/symbology/sym_bbg/sym_bbg:sym_bbg.txt,/datafeeds/symbology/sym_sec_entity/sym_sec_entity:sym_sec_entity.txt,/datafeeds/entity/ent_entity_advanced/ent_entity_advanced:ent_entity_coverage.txt",
+		Value:  "",
 		Desc:   "factset resources to be loaded",
 		EnvVar: "FACTSET_RESOURCES",
-	})
-
-	runningTime := app.String(cli.StringOpt{
-		Name:   "runningTime",
-		Value:  "1 12 00", // default run the job every Monday at 12:00 PM
-		Desc:   "Time at which the job will be run",
-		EnvVar: "RUNNING_TIME",
 	})
 
 	app.Action = func() {
@@ -120,11 +102,7 @@ func main() {
 
 		log.Printf("Resource list: %v", s.files)
 		go func() {
-			sch := gocron.NewScheduler()
-			schedule(sch, *runningTime, func() {
-				s.Fetch()
-			})
-			<-sch.Start()
+			s.fetchResources(s.files)
 		}()
 
 		httpHandler := &httpHandler{s: s}
@@ -137,34 +115,18 @@ func main() {
 	}
 }
 
-func schedule(scheduler *gocron.Scheduler, time string, job func()) {
-	timeVars := strings.Split(time, " ")
-	if len(timeVars) == 3 {
-		weekDay, err := strconv.Atoi(timeVars[0])
-		if err != nil {
-			log.Errorf("Cannot parse running time [%s]", time)
-		}
-
-		runningTime := timeVars[1] + ":" + timeVars[2]
-		var j *gocron.Job
-		j = scheduler.Every(1)
-		dayOfWeekScheduler := daysSchedulers[weekDay]
-		j = dayOfWeekScheduler(j)
-		j.At(runningTime).Do(job)
-	} else {
-		scheduler.Every(1).Monday().At("12:00").Do(job)
-	}
-}
-
 func getResourceList(resources string) []factsetResource {
+	if resources == "" {
+		return []factsetResource{}
+	}
 	factsetRes := []factsetResource{}
 	resList := strings.Split(resources, resSeparator)
 	for _, fulRes := range resList {
 		resPath := strings.Split(fulRes, ":")
 		if len(resPath) == 2 {
 			fr := factsetResource{
-				archive:  resPath[0],
-				fileName: resPath[1],
+				archive:   resPath[0],
+				fileNames: resPath[1],
 			}
 			factsetRes = append(factsetRes, fr)
 		}
@@ -178,6 +140,7 @@ func listen(h *httpHandler, port int) {
 	r.HandleFunc("/__health", v1a.Handler("Factset Reader Healthchecks", "Checks for accessing Factset server and Amazon S3 bucket", h.factsetHealthcheck(), h.amazonS3Healthcheck()))
 	r.HandleFunc("/__gtg", h.goodToGo)
 	r.HandleFunc("/force-import", h.s.forceImport).Methods("POST")
+	r.HandleFunc("/force-import-weekly", h.s.forceImportWeekly).Methods("POST")
 	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
 	if err != nil {
 		log.Error(err)

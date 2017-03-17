@@ -4,92 +4,204 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"sync"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"path/filepath"
+	"errors"
 	"strings"
+	"archive/zip"
+	"io"
+	"path/filepath"
 )
 
 type service struct {
 	rdConfig sftpConfig
 	wrConfig s3Config
 	files    []factsetResource
+	weekly   bool
+}
+
+func (s service) forceImportWeekly(rw http.ResponseWriter, req *http.Request) {
+	s.weekly = true
+	go s.fetchResources(s.files)
+	log.Info("Triggered fetching last weekly files")
 }
 
 func (s service) forceImport(rw http.ResponseWriter, req *http.Request) {
-	go s.Fetch()
-	log.Info("Triggered fetching")
+	go s.fetchResources(s.files)
+	log.Info("Triggered fetching most recently released files")
 }
 
-func (s service) Fetch() {
-	res := s.files
-
-	errorsCh := make(chan error)
-	var wg sync.WaitGroup
-	wg.Add(len(res))
-
-	for _, r := range res {
-		go func(res factsetResource) {
-			defer wg.Done()
-			err := s.fetchResource(res)
-			errorsCh <- err
-		}(r)
-	}
-
-	go handleErrors(errorsCh)
-	wg.Wait()
-}
-
-func (s service) fetchResource(res factsetResource) error {
-	start := time.Now()
-
+func (s service) fetchResources(resources []factsetResource) error {
 	rd, err := NewReader(s.rdConfig)
 	if err != nil {
 		return err
 	}
 	defer rd.Close()
 
-	log.Infof("Loading resource [%s]", res)
-	fileName, err := rd.Read(res, dataFolder)
+	var fileCollection []zipCollection
+	for _, res := range resources {
+		requestedFiles, _ := rd.Read(res, dataFolder, s.weekly)
+		for _, requestedFile := range requestedFiles {
+			fileCollection = append(fileCollection, requestedFile)
+		}
+	}
+
+	filesToWrite, err := sortAndZipFiles(fileCollection)
+
 	if err != nil {
 		return err
 	}
-
-	fullVersion, err := rd.GetFullVersion(fileName)
-	if err != nil {
-		return err
+	if len(fileCollection) == 0 {
+		return errors.New("Did not find any matching files")
 	}
-	extension := filepath.Ext(res.fileName)
-	nameWithoutExt := strings.TrimSuffix(res.fileName, extension)
-	fileNameOnS3 := nameWithoutExt + "_" + fullVersion + extension
-
-	defer func() {
-		os.Remove(path.Join(dataFolder, fileName))
-		os.Remove(path.Join(dataFolder, fileNameOnS3))
-	}()
-
-	log.Infof("Resource [%s] was succesfully read from Factset in %d", fileName, time.Since(start))
 
 	wr, err := NewWriter(s.wrConfig)
 	if err != nil {
 		return err
 	}
-	err = wr.Write(dataFolder, res.fileName, fileNameOnS3)
-	if err != nil {
-		return err
+	for _, fileToWrite := range filesToWrite {
+		err = wr.Write(dataFolder, fileToWrite)
+		if err != nil {
+			return err
+		}
 	}
-	log.Infof("Finished writting resource [%s] to S3 in %d", res, time.Since(start))
+
+	for _, result := range fileCollection {
+		for _, factsetFile := range result.filesToWrite {
+			if strings.Contains(result.archive, "full") {
+				os.Remove(path.Join(dataFolder + "/" + weekly, factsetFile))
+			} else {
+				os.Remove(path.Join(dataFolder + "/" + daily, factsetFile))
+			}
+
+		}
+		os.Remove(path.Join(dataFolder, result.archive))
+	}
+
+	for _, fileToWrite := range filesToWrite {
+		os.Remove(path.Join(dataFolder, fileToWrite))
+	}
+
 	return nil
 }
 
-func handleErrors(errors chan error) {
-	for e := range errors {
-		if e != nil {
-			log.Error(e)
+func zipFilesForUpload(fileTypes string) (string, error) {
+	var workingDir string
+	if fileTypes == weekly {
+		workingDir = dataFolder + "/" + weekly
+	} else if fileTypes == daily {
+		workingDir = dataFolder + "/" + daily
+	} else {
+		return "", errors.New("Invalid local directory provided")
+	}
+
+	zipFileName := fileTypes + ".zip"
+	zipFile, err := os.Create(dataFolder + "/" + zipFileName)
+	defer zipFile.Close()
+
+	if err != nil {
+		return zipFileName, err
+	}
+	zw := zip.NewWriter(zipFile)
+	defer zw.Close()
+
+	info, err := os.Stat(workingDir)
+	if err != nil {
+		return zipFileName, err
+	}
+
+	var baseDir string
+	if info.IsDir() {
+		baseDir = filepath.Base(workingDir)
+	}
+
+	filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error{
+		if err != nil {
+			return err
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		if baseDir != "" {
+			header.Name = filepath.Join(baseDir, strings.TrimPrefix(path, workingDir))
+		}
+
+		if info.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+
+		writer, err := zw.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		if file.Name() != fileTypes {
+			_, err = io.Copy(writer, file)
+		}
+		return err
+
+	})
+
+	if err != nil {
+		return zipFileName, err
+	}
+	log.Infof("Created zip of todays %s files", fileTypes)
+	return zipFileName, nil
+}
+
+func sortAndZipFiles(colls []zipCollection) ([]string, error) {
+	var weeklyFiles []string
+	var dailyFiles []string
+	var filesToWrite []string
+	for _, coll := range colls {
+		for _, file := range coll.filesToWrite {
+			if strings.Contains(file, "update") || strings.Contains(file, "delete"){
+				dailyFiles = append(dailyFiles, file)
+			} else {
+				weeklyFiles = append(weeklyFiles, file)
+			}
 		}
 	}
+
+	if len(dailyFiles) == 0 && len(weeklyFiles) == 0 {
+		return nil, errors.New("There are no files to write")
+	}
+
+	if len(weeklyFiles) == 0 {
+		dailyFileName, err := zipFilesForUpload(daily)
+		if err != nil {
+			return filesToWrite, err
+		}
+		filesToWrite = append(filesToWrite, dailyFileName)
+		return filesToWrite, err
+	} else {
+		dailyFileName, err := zipFilesForUpload(daily)
+		if err != nil {
+			return filesToWrite, err
+		}
+		filesToWrite = append(filesToWrite, dailyFileName)
+		weeklyFileName, err := zipFilesForUpload(weekly)
+		if err != nil {
+			return filesToWrite, err
+		}
+		filesToWrite = append(filesToWrite, weeklyFileName)
+		return filesToWrite, err
+	}
+
+	return []string{}, nil
 }
 
 func (s service) checkConnectivityToFactset() error {
