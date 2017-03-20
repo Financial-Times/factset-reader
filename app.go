@@ -106,6 +106,14 @@ func main() {
 		listen(httpHandler, *port)
 	}
 
+	if _, err := os.Stat(dataFolder + "/" + weekly); os.IsNotExist(err) {
+		os.Mkdir(dataFolder + "/" + weekly, 0755)
+	}
+
+	if _, err := os.Stat(dataFolder + "/" + daily); os.IsNotExist(err) {
+		os.Mkdir(dataFolder + "/" + daily, 0755)
+	}
+
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Errorf("[%v]", err)

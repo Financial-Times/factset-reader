@@ -155,14 +155,6 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 				return []string{}, err
 			}
 
-			if _, err := os.Stat(dest + "/" + weekly); os.IsNotExist(err) {
-				os.Mkdir(dest + "/" + weekly, 0755)
-			}
-
-			if _, err := os.Stat(dest + "/" + daily); os.IsNotExist(err) {
-				os.Mkdir(dest + "/" + daily, 0755)
-			}
-
 			if strings.Contains(archive, "full") {
 				dest = dest + "/" + weekly
 			} else {

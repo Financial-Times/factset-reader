@@ -82,8 +82,10 @@ func (s service) fetchResources(resources []factsetResource) error {
 		os.Remove(path.Join(dataFolder, fileToWrite))
 	}
 
-	os.Remove(path.Join(dataFolder + "/" + daily))
-	os.Remove(path.Join(dataFolder + "/" + weekly))
+	defer os.Remove(path.Join(dataFolder + "/" + daily + "/"))
+	defer os.Remove(path.Join(dataFolder + "/" + daily))
+	defer os.Remove(path.Join(dataFolder + "/" + weekly + "/"))
+	defer os.Remove(path.Join(dataFolder + "/" + weekly))
 
 	return nil
 }
