@@ -53,6 +53,7 @@ func TestS3Writer_Write(t *testing.T) {
 	as.NoError(err)
 	dbFile.Close()
 	err = os.RemoveAll(s3TestFolderName)
+	err = os.RemoveAll(testFolder + "/daily")
 }
 
 func TestS3Writer_Write_Error(t *testing.T) {

@@ -154,17 +154,19 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 			if err != nil {
 				return []string{}, err
 			}
-			os.Mkdir(dest + "/" + weekly, 0755)
-			os.Mkdir(dest + "/" + daily, 0755)
 
-			var prefix string
+			if _, err := os.Stat(dest + "/" + weekly); os.IsNotExist(err) {
+				os.Mkdir(dest + "/" + weekly, 0755)
+			}
+
+			if _, err := os.Stat(dest + "/" + daily); os.IsNotExist(err) {
+				os.Mkdir(dest + "/" + daily, 0755)
+			}
 
 			if strings.Contains(archive, "full") {
 				dest = dest + "/" + weekly
-				prefix = weekly
 			} else {
 				dest = dest + "/" + daily
-				prefix = daily
 			}
 
 			file, err := os.Create(path.Join(dest, f.Name))
@@ -177,7 +179,7 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 			}
 			file.Close()
 			rc.Close()
-			filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), "data/" + prefix + "/"))
+			filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), dest + "/"))
 		}
 	}
 	return filesToWrite, nil
