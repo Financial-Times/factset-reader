@@ -266,6 +266,8 @@ func TestFactsetReader_Unzip(t *testing.T) {
 
 	fsReader := FactsetReader{}
 
+	os.Mkdir(testFolder + "/" + weekly, 0755)
+
 	tc := struct {
 		archive   string
 		names     []string

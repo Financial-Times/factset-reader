@@ -146,6 +146,7 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 
 	for _, f := range r.File {
 		for _, factsetFile := range factsetFiles {
+			var dir string
 			justFileName := strings.TrimSuffix(factsetFile, ".txt")
 			if !strings.Contains(f.Name, justFileName) {
 				continue
@@ -156,12 +157,12 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 			}
 
 			if strings.Contains(archive, "full") {
-				dest = dest + "/" + weekly
+				dir = dest + "/" + weekly
 			} else {
-				dest = dest + "/" + daily
+				dir = dest + "/" + daily
 			}
 
-			file, err := os.Create(path.Join(dest, f.Name))
+			file, err := os.Create(path.Join(dir, f.Name))
 			if err != nil {
 				return []string{}, err
 			}
@@ -171,7 +172,7 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 			}
 			file.Close()
 			rc.Close()
-			filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), dest + "/"))
+			filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), dir + "/"))
 		}
 	}
 	return filesToWrite, nil

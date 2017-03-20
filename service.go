@@ -38,6 +38,14 @@ func (s service) fetchResources(resources []factsetResource) error {
 	}
 	defer rd.Close()
 
+	if _, err := os.Stat(dataFolder + "/" + weekly); os.IsNotExist(err) {
+		os.Mkdir(dataFolder + "/" + weekly, 0755)
+	}
+
+	if _, err := os.Stat(dataFolder + "/" + daily); os.IsNotExist(err) {
+		os.Mkdir(dataFolder + "/" + daily, 0755)
+	}
+
 	var fileCollection []zipCollection
 	for _, res := range resources {
 		requestedFiles, _ := rd.Read(res, dataFolder, s.weekly)
