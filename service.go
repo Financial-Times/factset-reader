@@ -46,7 +46,7 @@ func (s service) fetchResources(resources []factsetResource) error {
 		}
 	}
 
-	filesToWrite, err := sortAndZipFiles(fileCollection)
+	filesToWrite, err := s.sortAndZipFiles(fileCollection)
 
 	if err != nil {
 		return err
@@ -81,6 +81,9 @@ func (s service) fetchResources(resources []factsetResource) error {
 	for _, fileToWrite := range filesToWrite {
 		os.Remove(path.Join(dataFolder, fileToWrite))
 	}
+
+	os.Remove(path.Join(dataFolder + "/" + daily))
+	os.Remove(path.Join(dataFolder + "/" + weekly))
 
 	return nil
 }
@@ -162,7 +165,7 @@ func zipFilesForUpload(fileTypes string) (string, error) {
 	return zipFileName, nil
 }
 
-func sortAndZipFiles(colls []zipCollection) ([]string, error) {
+func (s service) sortAndZipFiles(colls []zipCollection) ([]string, error) {
 	var weeklyFiles []string
 	var dailyFiles []string
 	var filesToWrite []string
@@ -180,7 +183,14 @@ func sortAndZipFiles(colls []zipCollection) ([]string, error) {
 		return nil, errors.New("There are no files to write")
 	}
 
-	if len(weeklyFiles) == 0 {
+	if s.weekly == true {
+		weeklyFileName, err := zipFilesForUpload(weekly)
+		if err != nil {
+			return filesToWrite, err
+		}
+		filesToWrite = append(filesToWrite, weeklyFileName)
+		return filesToWrite, err
+	} else if len(weeklyFiles) == 0 {
 		dailyFileName, err := zipFilesForUpload(daily)
 		if err != nil {
 			return filesToWrite, err

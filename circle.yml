@@ -8,7 +8,7 @@ test:
     - mkdir -p $CIRCLE_TEST_REPORTS/golang
     - go test -race -v ./...
     - go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-    - go list ./... | awk -F/ '{print $4}' | xargs -I {} go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/{}.out ./{}
+    - go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/coverage.out ./...
     - cd $CIRCLE_ARTIFACTS && sed -i '1d' *.out
     - |
       echo "mode: atomic" > $CIRCLE_ARTIFACTS/overall-coverage.result
