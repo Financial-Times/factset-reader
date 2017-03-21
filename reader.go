@@ -44,7 +44,6 @@ func (sfr *FactsetReader) Read(fRes factsetResource, dest string, isWeekly bool)
 		return fileCollection, err
 	}
 
-
 	if isWeekly == true {
 		var onlyWeeklyFiles []os.FileInfo
 		for _, file := range files {
@@ -172,12 +171,11 @@ func (sfr *FactsetReader) unzip(archive string, factsetFiles []string, dest stri
 			}
 			file.Close()
 			rc.Close()
-			filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), dir + "/"))
+			filesToWrite = append(filesToWrite, strings.TrimPrefix(file.Name(), dir+"/"))
 		}
 	}
 	return filesToWrite, nil
 }
-
 
 func (sfr *FactsetReader) getMajorVersion(fullVersion string) (int, error) {
 	regex := regexp.MustCompile("^*v[0-9]+")

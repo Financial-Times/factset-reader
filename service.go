@@ -5,12 +5,12 @@ import (
 	"os"
 	"path"
 
-	log "github.com/Sirupsen/logrus"
-	"errors"
-	"strings"
 	"archive/zip"
+	"errors"
+	log "github.com/Sirupsen/logrus"
 	"io"
 	"path/filepath"
+	"strings"
 )
 
 type service struct {
@@ -39,11 +39,11 @@ func (s service) fetchResources(resources []factsetResource) error {
 	defer rd.Close()
 
 	if _, err := os.Stat(dataFolder + "/" + weekly); os.IsNotExist(err) {
-		os.Mkdir(dataFolder + "/" + weekly, 0755)
+		os.Mkdir(dataFolder+"/"+weekly, 0755)
 	}
 
 	if _, err := os.Stat(dataFolder + "/" + daily); os.IsNotExist(err) {
-		os.Mkdir(dataFolder + "/" + daily, 0755)
+		os.Mkdir(dataFolder+"/"+daily, 0755)
 	}
 
 	var fileCollection []zipCollection
@@ -74,26 +74,7 @@ func (s service) fetchResources(resources []factsetResource) error {
 		}
 	}
 
-	for _, result := range fileCollection {
-		for _, factsetFile := range result.filesToWrite {
-			if strings.Contains(result.archive, "full") {
-				os.Remove(path.Join(dataFolder + "/" + weekly, factsetFile))
-			} else {
-				os.Remove(path.Join(dataFolder + "/" + daily, factsetFile))
-			}
-
-		}
-		os.Remove(path.Join(dataFolder, result.archive))
-	}
-
-	for _, fileToWrite := range filesToWrite {
-		os.Remove(path.Join(dataFolder, fileToWrite))
-	}
-
-	defer os.Remove(path.Join(dataFolder + "/" + daily + "/"))
-	defer os.Remove(path.Join(dataFolder + "/" + daily))
-	defer os.Remove(path.Join(dataFolder + "/" + weekly + "/"))
-	defer os.Remove(path.Join(dataFolder + "/" + weekly))
+	defer s.cleanUpWorkingDirectory(fileCollection, filesToWrite)
 
 	return nil
 }
@@ -128,7 +109,7 @@ func zipFilesForUpload(fileTypes string) (string, error) {
 		baseDir = filepath.Base(workingDir)
 	}
 
-	filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error{
+	filepath.Walk(workingDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -181,7 +162,7 @@ func (s service) sortAndZipFiles(colls []zipCollection) ([]string, error) {
 	var filesToWrite []string
 	for _, coll := range colls {
 		for _, file := range coll.filesToWrite {
-			if strings.Contains(file, "update") || strings.Contains(file, "delete"){
+			if strings.Contains(file, "update") || strings.Contains(file, "delete") {
 				dailyFiles = append(dailyFiles, file)
 			} else {
 				weeklyFiles = append(weeklyFiles, file)
@@ -190,7 +171,7 @@ func (s service) sortAndZipFiles(colls []zipCollection) ([]string, error) {
 	}
 
 	if len(dailyFiles) == 0 && len(weeklyFiles) == 0 {
-		return nil, errors.New("There are no files to write")
+		return filesToWrite, errors.New("There are no files to write")
 	}
 
 	if s.weekly == true {
@@ -222,6 +203,29 @@ func (s service) sortAndZipFiles(colls []zipCollection) ([]string, error) {
 	}
 
 	return []string{}, nil
+}
+
+func (s service) cleanUpWorkingDirectory(fileCollection []zipCollection, filesToWrite []string) {
+	for _, result := range fileCollection {
+		for _, factsetFile := range result.filesToWrite {
+			if strings.Contains(result.archive, "full") {
+				os.Remove(path.Join(dataFolder+"/"+weekly, factsetFile))
+			} else {
+				os.Remove(path.Join(dataFolder+"/"+daily, factsetFile))
+			}
+
+		}
+		os.Remove(path.Join(dataFolder, result.archive))
+	}
+
+	for _, fileToWrite := range filesToWrite {
+		os.Remove(path.Join(dataFolder, fileToWrite))
+	}
+
+	os.Remove(path.Join(dataFolder + "/" + daily + "/"))
+	os.Remove(path.Join(dataFolder + "/" + daily))
+	os.Remove(path.Join(dataFolder + "/" + weekly + "/"))
+	os.Remove(path.Join(dataFolder + "/" + weekly))
 }
 
 func (s service) checkConnectivityToFactset() error {

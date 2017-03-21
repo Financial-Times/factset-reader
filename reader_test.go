@@ -11,7 +11,6 @@ import (
 	"strings"
 )
 
-const testFolder = "test"
 const isWeekly = false
 
 var filesToRead = []string{"edm_security_entity_map.txt"}
@@ -27,7 +26,7 @@ func TestFactsetReader_getMinorAndMajorVersions(t *testing.T) {
 		expectedMajorVersion int
 	}{
 		{
-			name:            "v1_full_2145",
+			name:                 "v1_full_2145",
 			expectedMinorVersion: 2145,
 			expectedMajorVersion: 1,
 		},
@@ -58,12 +57,12 @@ func TestFactsetReader_getVersionError(t *testing.T) {
 		expectedMajorVersion int
 	}{
 		{
-			name:            "v_full",
+			name:                 "v_full",
 			expectedMinorVersion: -1,
 			expectedMajorVersion: -1,
 		},
 		{
-			name:                "full_notAMinorVersion",
+			name:                 "full_notAMinorVersion",
 			expectedMinorVersion: -1,
 			expectedMajorVersion: -1,
 		},
@@ -256,7 +255,7 @@ func TestFactsetReader_GetLastVersionError(t *testing.T) {
 		archive:   "test/edm_premium",
 		fileNames: "edm_security_entity_map.txt;edm_entities.txt",
 	}
-	dest := path.Join(testFolder, dataFolder)
+	dest := path.Join(dataFolder, dataFolder)
 	_, err := fsReader.Read(factsetRes, dest, isWeekly)
 	as.Error(err)
 }
@@ -266,7 +265,7 @@ func TestFactsetReader_Unzip(t *testing.T) {
 
 	fsReader := FactsetReader{}
 
-	os.Mkdir(testFolder + "/" + weekly, 0755)
+	os.Mkdir(dataFolder+"/"+weekly, 0755)
 
 	tc := struct {
 		archive   string
@@ -276,14 +275,14 @@ func TestFactsetReader_Unzip(t *testing.T) {
 	}{
 		archive:   "edm_premium_v1_full_1532.zip",
 		names:     filesToRead,
-		dest:      testFolder,
+		dest:      dataFolder,
 		subFolder: "/weekly",
 	}
 
 	_, err := fsReader.unzip(tc.archive, tc.names, tc.dest)
 	as.NoError(err)
 	for _, name := range tc.names {
-		fileName := path.Join(tc.dest + tc.subFolder, name)
+		fileName := path.Join(tc.dest+tc.subFolder, name)
 		file, err := os.Open(fileName)
 		as.NotNil(file)
 		as.NoError(err)
@@ -305,7 +304,7 @@ func TestFactsetReader_Unzip_ReaderError(t *testing.T) {
 	}{
 		archive: "sample_v1_full_1532.zip",
 		names:   append(filesToRead, "sample_entity_map"),
-		dest:    testFolder,
+		dest:    dataFolder,
 	}
 
 	_, err := fsReader.unzip(tc.archive, tc.names, tc.dest)
@@ -325,7 +324,7 @@ func TestFactsetReader_Unzip_NoMatch(t *testing.T) {
 	}{
 		archive: "edm_premium_v1_full_1532.zip",
 		names:   append(filesToRead, "sample_map"),
-		dest:    testFolder,
+		dest:    dataFolder,
 	}
 
 	_, err := fsReader.unzip(tc.archive, tc.names, tc.dest)
@@ -357,17 +356,17 @@ func TestFactsetReader_Download(t *testing.T) {
 		path     string
 		fileName string
 	}{
-		path:     testFolder,
+		path:     dataFolder,
 		fileName: "edm_premium_v1_full_1532.zip",
 	}
 
-	err := fsReader.download(tc.path, tc.fileName, path.Join(testFolder, dataFolder))
+	err := fsReader.download(tc.path, tc.fileName, path.Join(dataFolder, dataFolder))
 	as.NoError(err)
 
-	file, err := os.Open(path.Join(testFolder, dataFolder, tc.fileName))
+	file, err := os.Open(path.Join(dataFolder, dataFolder, tc.fileName))
 	as.NoError(err)
 	file.Close()
-	as.NoError(os.RemoveAll(path.Join(testFolder, dataFolder)))
+	as.NoError(os.RemoveAll(path.Join(dataFolder, dataFolder)))
 }
 
 func TestFactsetReader_ReadRes(t *testing.T) {
@@ -395,7 +394,7 @@ func TestFactsetReader_ReadRes(t *testing.T) {
 		archive:   "test/edm_premium",
 		fileNames: "edm_security_entity_map.txt",
 	}
-	dest := path.Join(testFolder, "/weekly")
+	dest := path.Join(dataFolder, "/weekly")
 	zipColls, err := fsReader.Read(factsetRes, dest, isWeekly)
 	for _, zipColl := range zipColls {
 		as.NoError(err)
@@ -430,7 +429,7 @@ func TestFactsetReader_Read_ReadDirErr(t *testing.T) {
 		archive:   "test/edm_premium",
 		fileNames: "edm_security_entity_map.txt;edm_entities",
 	}
-	dest := path.Join(testFolder, dataFolder)
+	dest := path.Join(dataFolder, dataFolder)
 	_, err := fsReader.Read(factsetRes, dest, isWeekly)
 	as.Error(err)
 }
@@ -451,7 +450,7 @@ func TestFactsetReader_Read_DownloadError(t *testing.T) {
 		archive:   "test/edm_premium",
 		fileNames: "edm_security_entity_map.txt;edm_entities.txt",
 	}
-	dest := path.Join(testFolder, dataFolder)
+	dest := path.Join(dataFolder, dataFolder)
 	_, err := fsReader.Read(factsetRes, dest, isWeekly)
 	as.Error(err)
 }

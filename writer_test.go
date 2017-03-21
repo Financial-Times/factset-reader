@@ -2,10 +2,11 @@ package main
 
 import (
 	"errors"
+	"github.com/golang/go/src/pkg/path"
 	"github.com/stretchr/testify/assert"
-	"testing"
 	"io/ioutil"
 	"os"
+	"testing"
 	"time"
 )
 
@@ -46,14 +47,16 @@ func TestS3Writer_Write(t *testing.T) {
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
-	err := wr.Write(testFolder, "daily.zip")
+	os.Create(path.Join(dataFolder, "daily.zip"))
+	err := wr.Write(dataFolder, "daily.zip")
 	as.NoError(err)
 
-	dbFile, err := os.Open(testFolder + "/edm_security_entity_map_test.txt")
+	dbFile, err := os.Open(dataFolder + "/edm_security_entity_map_test.txt")
 	as.NoError(err)
 	dbFile.Close()
 	err = os.RemoveAll(s3TestFolderName)
-	err = os.RemoveAll(testFolder + "/daily")
+	err = os.RemoveAll(dataFolder + "/daily")
+	err = os.RemoveAll(dataFolder + "daily.zip")
 }
 
 func TestS3Writer_Write_Error(t *testing.T) {
@@ -68,7 +71,8 @@ func TestS3Writer_Write_Error(t *testing.T) {
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
-	err := wr.Write(testFolder, "daily.zip")
+	err := wr.Write(dataFolder, "daily.zip")
 	as.NotNil(err)
 	as.Error(err)
+	err = os.RemoveAll(dataFolder + "daily.zip")
 }
