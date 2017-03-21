@@ -56,7 +56,7 @@ func TestS3Writer_Write(t *testing.T) {
 	dbFile.Close()
 	err = os.RemoveAll(s3TestFolderName)
 	err = os.RemoveAll(dataFolder + "/daily")
-	err = os.RemoveAll(dataFolder + "daily.zip")
+	err = os.RemoveAll(dataFolder + "/daily.zip")
 }
 
 func TestS3Writer_Write_Error(t *testing.T) {
@@ -74,5 +74,5 @@ func TestS3Writer_Write_Error(t *testing.T) {
 	err := wr.Write(dataFolder, "daily.zip")
 	as.NotNil(err)
 	as.Error(err)
-	err = os.RemoveAll(dataFolder + "daily.zip")
+	err = os.RemoveAll(dataFolder + "/daily.zip")
 }
