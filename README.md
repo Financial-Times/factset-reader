@@ -38,9 +38,13 @@ After downloading the zip files from Factset FTP server, the service will write 
 
 # Endpoints
 
-Force-import (initiate importing manually):
+Force-import (initiate importing manually of all most recent files):
 
 `http://localhost:8080/force-import -XPOST`
+
+Force-import-weekly (initiate importing manually of all most recent weekly files):
+
+`http://localhost:8080/force-import-weekly -XPOST`
 
 ## Admin Endpoints
 Health checks: `http://localhost:8080/__health`
