@@ -1,10 +1,12 @@
 package main
 
 const dataFolder = "data"
+const weekly = "weekly"
+const daily = "daily"
 
 type factsetResource struct {
-	archive  string
-	fileName string
+	archive   string
+	fileNames string
 }
 
 type s3Config struct {
@@ -19,4 +21,9 @@ type sftpConfig struct {
 	port     int
 	username string
 	key      string
+}
+
+type zipCollection struct {
+	archive      string
+	filesToWrite []string
 }

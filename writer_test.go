@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/golang/go/src/pkg/path"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
@@ -10,70 +11,6 @@ import (
 )
 
 var s3TestFolderName = time.Now().Format("2006-01-02")
-
-func TestS3Writer_Gets3ResName(t *testing.T) {
-	as := assert.New(t)
-	tcs := []struct {
-		resName  string
-		expected string
-	}{
-		{
-			resName:  "edm_premium_full_1532.zip",
-			expected: s3TestFolderName + "/edm_premium_full_1532.zip",
-		},
-		{
-			resName:  "edm_premium_full_1532.zip.txt",
-			expected:  s3TestFolderName + "/edm_premium_full_1532.zip.txt",
-		},
-	}
-
-	wr := S3Writer{}
-
-	for _, tc := range tcs {
-		r := wr.getS3ResFilePath(tc.resName)
-		as.Equal(r, tc.expected)
-	}
-}
-
-func TestS3Writer_Gets3ResName_NoExtension(t *testing.T) {
-	as := assert.New(t)
-	tcs := []struct {
-		resName  string
-		expected string
-	}{
-		{
-			resName:  "edm_premium_full_1532",
-			expected:  s3TestFolderName + "/edm_premium_full_1532",
-		},
-	}
-
-	wr := S3Writer{}
-
-	for _, tc := range tcs {
-		r := wr.getS3ResFilePath(tc.resName)
-		as.Equal(r, tc.expected)
-	}
-}
-
-func TestS3Writer_Gets3ResName_EmptyFilename(t *testing.T) {
-	as := assert.New(t)
-	tcs := []struct {
-		resName  string
-		expected string
-	}{
-		{
-			resName:  "",
-			expected: "",
-		},
-	}
-
-	wr := S3Writer{}
-
-	for _, tc := range tcs {
-		r := wr.getS3ResFilePath(tc.resName)
-		as.Equal(r, tc.expected)
-	}
-}
 
 func TestS3Writer_Write(t *testing.T) {
 	as := assert.New(t)
@@ -110,13 +47,16 @@ func TestS3Writer_Write(t *testing.T) {
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
-	err := wr.Write(testFolder, "edm_security_entity_map_test.txt", "edm_security_entity_map_test_v1_full_2145.txt")
+	os.Create(path.Join(dataFolder, "daily.zip"))
+	err := wr.Write(dataFolder, "daily.zip")
 	as.NoError(err)
 
-	dbFile, err := os.Open(testFolder + "/edm_security_entity_map_test.txt")
+	dbFile, err := os.Open(dataFolder + "/edm_security_entity_map_test.txt")
 	as.NoError(err)
 	dbFile.Close()
 	err = os.RemoveAll(s3TestFolderName)
+	err = os.RemoveAll(dataFolder + "/daily")
+	err = os.RemoveAll(dataFolder + "/daily.zip")
 }
 
 func TestS3Writer_Write_Error(t *testing.T) {
@@ -131,7 +71,8 @@ func TestS3Writer_Write_Error(t *testing.T) {
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
-	err := wr.Write(testFolder, "edm_security_entity_map_test.txt", "edm_security_entity_map_test_v1_full_2115.txt")
+	err := wr.Write(dataFolder, "daily.zip")
 	as.NotNil(err)
 	as.Error(err)
+	err = os.RemoveAll(dataFolder + "/daily.zip")
 }
