@@ -22,16 +22,16 @@ type service struct {
 
 func (s service) forceImportWeekly(rw http.ResponseWriter, req *http.Request) {
 	s.weekly = true
-	go s.fetchResources(s.files)
+	go s.fetchResources()
 	log.Info("Triggered fetching last weekly files")
 }
 
 func (s service) forceImport(rw http.ResponseWriter, req *http.Request) {
-	go s.fetchResources(s.files)
+	go s.fetchResources()
 	log.Info("Triggered fetching most recently released files")
 }
 
-func (s service) fetchResources(resources []factsetResource) error {
+func (s service) fetchResources() error {
 	rd, err := NewReader(s.rdConfig)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (s service) fetchResources(resources []factsetResource) error {
 	}
 
 	var fileCollection []zipCollection
-	for _, res := range resources {
+	for _, res := range s.files {
 		requestedFiles, _ := rd.Read(res, dataFolder, s.weekly)
 		for _, requestedFile := range requestedFiles {
 			fileCollection = append(fileCollection, requestedFile)
