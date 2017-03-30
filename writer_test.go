@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/golang/go/src/pkg/path"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 	"time"
 )
@@ -14,6 +14,8 @@ var s3TestFolderName = time.Now().Format("2006-01-02")
 
 func TestS3Writer_Write(t *testing.T) {
 	as := assert.New(t)
+	var actualPutDataObjName string
+	var actualPutData string
 
 	httpS3Client := httpS3ClientMock{
 		putObjectMock: func(objectName string, filePath string) (int64, error) {
@@ -45,6 +47,11 @@ func TestS3Writer_Write(t *testing.T) {
 		bucketExistsMock: func(bucket string) (bool, error) {
 			return true, nil
 		},
+		putData: func(objectName string, data []byte) error {
+			actualPutDataObjName = objectName
+			actualPutData = string(data[:])
+			return nil
+		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
 	os.Create(path.Join(dataFolder, "daily.zip"))
@@ -57,6 +64,8 @@ func TestS3Writer_Write(t *testing.T) {
 	err = os.RemoveAll(s3TestFolderName)
 	err = os.RemoveAll(dataFolder + "/daily")
 	err = os.RemoveAll(dataFolder + "/daily.zip")
+	as.Equal("daily", actualPutDataObjName)
+	as.Equal(time.Now().Format("2006-01-02")+"/daily.zip", actualPutData)
 }
 
 func TestS3Writer_Write_Error(t *testing.T) {

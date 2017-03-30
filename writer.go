@@ -5,6 +5,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"path/filepath"
 )
 
 type Writer interface {
@@ -29,5 +30,12 @@ func (s3w *S3Writer) Write(src string, fileName string) error {
 		return err
 	}
 	log.Infof("Uploaded file [%s] of size [%d] successfully", s3ResFilePath, n)
+	ext := filepath.Ext(fileName)
+	name := fileName[0 : len(fileName)-len(ext)]
+	err = s3w.s3Client.PutData(name, []byte(s3ResFilePath))
+	if err != nil {
+		return err
+	}
+	log.Infof("Uploaded file [%s] successfully", name)
 	return nil
 }
