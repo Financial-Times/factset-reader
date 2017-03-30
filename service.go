@@ -67,6 +67,7 @@ func (s service) fetchResources() error {
 	if err != nil {
 		return err
 	}
+
 	for _, fileToWrite := range filesToWrite {
 		err = wr.Write(dataFolder, fileToWrite)
 		if err != nil {

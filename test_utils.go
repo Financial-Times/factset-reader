@@ -22,6 +22,7 @@ type fileInfoMock struct {
 
 type httpS3ClientMock struct {
 	putObjectMock    func(objectName string, filePath string) (int64, error)
+	putData          func(objectName string, data []byte) error
 	bucketExistsMock func(bucket string) (bool, error)
 }
 
@@ -67,6 +68,10 @@ func (fi fileInfoMock) Sys() interface{} {
 
 func (s3w *httpS3ClientMock) PutObject(objectName string, filePath string) (int64, error) {
 	return s3w.putObjectMock(objectName, filePath)
+}
+
+func (s3w *httpS3ClientMock) PutData(objectName string, data []byte) error {
+	return s3w.putData(objectName, data)
 }
 
 func (s3w *httpS3ClientMock) BucketExists(bucket string) (bool, error) {
