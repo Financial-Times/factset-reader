@@ -54,7 +54,8 @@ func TestS3Writer_Write(t *testing.T) {
 		},
 	}
 	wr := S3Writer{s3Client: &httpS3Client}
-	os.Create(path.Join(dataFolder, "daily.zip"))
+	zipFile, _ := os.Create(path.Join(dataFolder, "daily.zip"))
+	zipFile.Close()
 	err := wr.Write(dataFolder, "daily.zip")
 	as.NoError(err)
 
