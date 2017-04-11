@@ -106,7 +106,8 @@ func createTestDirectoriesAndFiles(zc zipCollection) {
 	}
 	os.Mkdir(dataFolder+"/"+archive, 0755)
 	for _, file := range zc.filesToWrite {
-		os.Create(dataFolder + "/" + archive + "/" + file)
+		createdFile, _ := os.Create(dataFolder + "/" + archive + "/" + file)
+		createdFile.Close()
 	}
 
 }
