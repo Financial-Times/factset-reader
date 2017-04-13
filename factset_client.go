@@ -1,13 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path"
 	"strconv"
 
-	"errors"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )
@@ -36,6 +36,7 @@ func (s *SFTPClient) getSSHConfig(username string, key string) (*ssh.ClientConfi
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
 	return c, nil
 }
