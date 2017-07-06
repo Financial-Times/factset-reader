@@ -1,0 +1,21 @@
+# Default values for factset-reader.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+service:
+  name: "" # The name of the service, should be defined in the specific app-configs folder.
+  hasHealthcheck: "true"
+replicaCount: 1
+image:
+  repository: coco/factset-reader
+  pullPolicy: IfNotPresent
+resources:
+  limits:
+    memory: 256Mi
+env:
+  FACTSET_FTP: ""
+storage:
+  region: ""
+  zone: ""
+  capacity: ""
+  fsType: ""
+  volumeID: ""

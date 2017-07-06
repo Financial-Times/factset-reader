@@ -1,0 +1,84 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Values.service.name }} 
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}" 
+    visualize: "true" 
+    app: {{ .Values.service.name }} 
+spec:
+  replicas: {{ .Values.replicaCount }} 
+  selector: 
+    matchLabels:
+      app: {{ .Values.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.service.name }}
+        visualize: "true" 
+    spec:
+      containers: 
+      - name: {{ .Values.service.name }} 
+        image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources: 
+{{ toYaml .Values.resources | indent 12 }}
+        volumeMounts:
+        - name: factset-persistent
+          mountPath: /data
+          subPath: factset-data
+        env: 
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: aws.access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: aws.secret_access_key
+        - name: BUCKET_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: aws.s3.factset.bucket
+        - name: S3_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: aws.s3.domain
+        - name: FACTSET_USER
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: factset.user
+        - name: FACTSET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: factset.key
+        - name: FACTSET_FTP
+          value: {{ .Values.env.FACTSET_FTP }}
+        - name: FACTSET_RESOURCES
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: factset.resources
+        ports: 
+        - containerPort: 8080 
+        livenessProbe: 
+          tcpSocket: 
+            port: 8080 
+          initialDelaySeconds: 5
+        readinessProbe: 
+          httpGet: 
+            path: "/__gtg" 
+            port: 8080 
+          initialDelaySeconds: 10
+          timeoutSeconds: 2
+          periodSeconds: 30 
+      volumes:
+      - name: factset-persistent
+        persistentVolumeClaim:
+          claimName: factset-reader-pvc
