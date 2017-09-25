@@ -33,6 +33,8 @@ The resources argument specifies a comma separated list of archives and files wi
 
 After downloading the zip files from Factset FTP server, the service will write them to the specified Amazon S3 bucket. The zip files written to S3 will be inside of a folder named by the current date. Depending upon the day there may be both a weekly.zip and daily.zip or just a daily.zip
 
+If creating a new daily.zip or weekly.zip, the loader will also update the index files found in the S3 bucket (daily/weelkly respectively).  These contain the keys to the latest versions of each zip.
+
 # Endpoints
 
 Force-import (initiate importing manually of all most recent files):
