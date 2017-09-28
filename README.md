@@ -6,13 +6,10 @@ __A service for reading files from Factset FTP (SFTP) server and writing them in
 
 # Installation
 
-For the first time:
-
-`go get github.com/Financial-Times/factset-reader`
-
-or update:
-
-`go get -u github.com/Financial-Times/factset-reader`
+1. go get github.com/kardianos/govendor
+2. go get github.com/Financial-Times/factset-reader
+3. cd $GOPATH/src/github.com/Financial-Times/factset-reader
+4. govendor sync
 
 # Running
 

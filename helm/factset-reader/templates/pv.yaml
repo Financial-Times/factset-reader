@@ -1,0 +1,19 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: "{{ .Values.service.name }}-pv"
+  labels:
+    failure-domain.beta.kubernetes.io/region: {{ .Values.storage.region }}
+    failure-domain.beta.kubernetes.io/zone: {{ .Values.storage.zone }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: {{ .Values.storage.capacity }}
+  awsElasticBlockStore:
+    fsType: {{ .Values.storage.fsType }}
+    volumeID: {{ .Values.storage.volumeID }}
+  persistentVolumeReclaimPolicy: Retain
+  claimRef:
+    name: "{{ .Values.service.name }}-pvc"
+    namespace: default

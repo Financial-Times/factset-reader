@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/Financial-Times/go-fthealth/v1a"
+	"github.com/Financial-Times/service-status-go/gtg"
 	log "github.com/Sirupsen/logrus"
 )
 
@@ -46,15 +46,14 @@ func (h *httpHandler) checkConnectivityToS3() (string, error) {
 	return "", nil
 }
 
-func (h *httpHandler) goodToGo(w http.ResponseWriter, r *http.Request) {
-	if _, err := h.checkConnectivityToFactset(); err != nil {
+func (h *httpHandler) goodToGo() gtg.Status {
+	if msg, err := h.checkConnectivityToFactset(); err != nil {
 		log.Error(err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
+		return gtg.Status{GoodToGo: false, Message: msg}
 	}
-	if _, err := h.checkConnectivityToS3(); err != nil {
+	if msg, err := h.checkConnectivityToS3(); err != nil {
 		log.Error(err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
+		return gtg.Status{GoodToGo: false, Message: msg}
 	}
+	return gtg.Status{GoodToGo: true}
 }

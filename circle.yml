@@ -1,17 +1,30 @@
+machine:
+  environment:
+    PROJECT_GOPATH: "${HOME}/.go_project"
+    PROJECT_PARENT_PATH: "${PROJECT_GOPATH}/src/github.com/${CIRCLE_PROJECT_USERNAME}"
+    PROJECT_PATH: "${PROJECT_PARENT_PATH}/${CIRCLE_PROJECT_REPONAME}"
+    GOPATH: "${HOME}/.go_workspace:${PROJECT_GOPATH}"
+
+checkout:
+  post:
+    - mkdir -p "${PROJECT_PARENT_PATH}"
+    - ln -sf "${HOME}/${CIRCLE_PROJECT_REPONAME}/" "${PROJECT_PATH}"
+
 dependencies:
   pre:
-    - go get github.com/axw/gocov/gocov; go get github.com/matm/gocov-html; go get -u github.com/jstemmer/go-junit-report
+    - go get -u github.com/kardianos/govendor
+  override:
+    - cd $PROJECT_PATH && govendor sync
+    - cd $PROJECT_PATH && go build -v
+
 test:
   pre:
-    - go get github.com/mattn/goveralls
+    - go get -u github.com/jstemmer/go-junit-report
+    - go get -u github.com/mattn/goveralls
+    - cd $PROJECT_PATH && wget https://raw.githubusercontent.com/Financial-Times/cookiecutter-upp-golang/master/coverage.sh && chmod +x coverage.sh
   override:
     - mkdir -p $CIRCLE_TEST_REPORTS/golang
-    - go test -race -v ./...
-    - go test -race -v ./... | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
-    - go test -v -cover -race -coverprofile=$CIRCLE_ARTIFACTS/coverage.out ./...
-    - cd $CIRCLE_ARTIFACTS && sed -i '1d' *.out
-    - |
-      echo "mode: atomic" > $CIRCLE_ARTIFACTS/overall-coverage.result
-    - cd $CIRCLE_ARTIFACTS && cat *.out >> overall-coverage.result
+    - cd $PROJECT_PATH && govendor test -race -v +local | go-junit-report > $CIRCLE_TEST_REPORTS/golang/junit.xml
+    - cd $PROJECT_PATH && ./coverage.sh
   post:
-    - goveralls -coverprofile=$CIRCLE_ARTIFACTS/overall-coverage.result -service=circle-ci -repotoken=$COVERALLS_TOKEN
+    - goveralls -coverprofile=$CIRCLE_ARTIFACTS/coverage.out -service=circle-ci -repotoken=$COVERALLS_TOKEN

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Financial-Times/go-fthealth/v1a"
+	"github.com/Financial-Times/service-status-go/httphandlers"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
@@ -135,7 +136,8 @@ func listen(h *httpHandler, port int) {
 	log.Infof("Listening on port: %d", port)
 	r := mux.NewRouter()
 	r.HandleFunc("/__health", v1a.Handler("Factset Reader Healthchecks", "Checks for accessing Factset server and Amazon S3 bucket", h.factsetHealthcheck(), h.amazonS3Healthcheck()))
-	r.HandleFunc("/__gtg", h.goodToGo)
+	gtgHandler := httphandlers.NewGoodToGoHandler(h.goodToGo)
+	r.HandleFunc(httphandlers.GTGPath, gtgHandler)
 	r.HandleFunc("/force-import", h.s.forceImport).Methods("POST")
 	r.HandleFunc("/force-import-weekly", h.s.forceImportWeekly).Methods("POST")
 	err := http.ListenAndServe(":"+strconv.Itoa(port), r)
