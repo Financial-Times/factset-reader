@@ -12,10 +12,6 @@ resources:
   limits:
     memory: 256Mi
 env:
-  FACTSET_FTP: ""
+  FACTSET_FTP: fts-sftp.factset.com
 storage:
-  region: ""
-  zone: ""
-  capacity: ""
-  fsType: ""
-  volumeID: ""
+  capacity: 5Gi
