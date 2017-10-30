@@ -8,3 +8,6 @@ spec:
   resources:
     requests:
       storage: {{ .Values.storage.capacity }}
+  selector:
+    matchLabels:
+      provisioned-for: "{{.Values.service.name}}"

@@ -82,4 +82,4 @@ spec:
       volumes:
       - name: factset-persistent
         persistentVolumeClaim:
-          claimName: factset-reader-pvc
+          claimName: "{{ .Values.service.name }}-pvc"
