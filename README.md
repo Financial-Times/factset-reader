@@ -1,3 +1,5 @@
+DECOMISSIONED Using Factsets own ![data loader](https://www.factset.com/download/datafeedloader) instead
+
 # Factset Reader (factset-reader)
 
 [![Circle CI](https://circleci.com/gh/Financial-Times/factset-reader/tree/master.png?style=shield)](https://circleci.com/gh/Financial-Times/factset-reader/tree/master) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/factset-reader/badge.svg)](https://coveralls.io/github/Financial-Times/factset-reader)
